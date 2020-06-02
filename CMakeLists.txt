@@ -22,6 +22,7 @@ endif()
 
 Ubpa_InitProject()
 
+Ubpa_AddSubDirsRec(include)
 Ubpa_AddSubDirsRec(src)
 
 Ubpa_Export(DIRECTORIES "include")
