@@ -14,5 +14,9 @@ namespace Ubpa::DX12 {
 
         void CreateDescriptorHeap(UINT size, D3D12_DESCRIPTOR_HEAP_TYPE type,
             ID3D12DescriptorHeap** pHeap);
+
+        void CreateSRV_Tex2D(
+            ID3D12Resource* pResource,
+            D3D12_CPU_DESCRIPTOR_HANDLE DestDescriptor);
     };
 }

@@ -8,6 +8,7 @@ Ubpa_AddTarget(
     d3dcompiler.lib
 	D3D12.lib
 	dxgi.lib
+    dxguid.lib
   DEFINE
     UNICODE
 	_UNICODE

@@ -1,5 +1,7 @@
 #include <UDX12/Device.h>
 
+#include <UDX12/Desc.h>
+
 using namespace Ubpa;
 
 void DX12::Device::CreateCommittedResource(
@@ -26,4 +28,12 @@ void DX12::Device::CreateDescriptorHeap(UINT size, D3D12_DESCRIPTOR_HEAP_TYPE ty
     cbvHeapDesc.NodeMask = 0;
     ThrowIfFailed(raw->CreateDescriptorHeap(&cbvHeapDesc,
         IID_PPV_ARGS(pHeap)));
+}
+
+void DX12::Device::CreateSRV_Tex2D(
+    ID3D12Resource* pResource,
+    D3D12_CPU_DESCRIPTOR_HANDLE DestDescriptor)
+{
+    D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = Desc::SRC::Tex2D(pResource);
+    raw->CreateShaderResourceView(pResource, &srvDesc, DestDescriptor);
 }

@@ -7,10 +7,6 @@ void DX12::GCmdList::Reset(ID3D12CommandAllocator* pAllocator,
     ThrowIfFailed(raw->Reset(pAllocator, pInitialState));
 }
 
-void DX12::GCmdList::Execute(ID3D12CommandQueue* queue) {
-    queue->ExecuteCommandLists(1, reinterpret_cast<ID3D12CommandList* const*>(raw.GetAddressOf()));
-}
-
 void DX12::GCmdList::ResourceBarrier(ID3D12Resource* resource, D3D12_RESOURCE_STATES from, D3D12_RESOURCE_STATES to) {
     raw->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(resource,
         from, to));
