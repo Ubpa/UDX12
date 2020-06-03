@@ -4,7 +4,7 @@
 
 namespace Ubpa::DX12 {
     // ref: https://docs.microsoft.com/en-us/windows/win32/direct3d12/creating-descriptor-heaps
-    struct DescriptorHeap : ComPtrHolder<ID3D12DescriptorHeap>
+    struct DescriptorHeap : Util::ComPtrHolder<ID3D12DescriptorHeap>
     {
         DescriptorHeap() { memset(this, 0, sizeof(*this)); }
 

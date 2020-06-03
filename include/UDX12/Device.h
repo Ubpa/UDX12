@@ -6,7 +6,7 @@ namespace Ubpa::DX12 {
     // raw : Microsoft::WRL::ComPtr<ID3D12Device>
     // .   : simple API
     // ->  : raw API
-    struct Device : ComPtrHolder<ID3D12Device> {
+    struct Device : Util::ComPtrHolder<ID3D12Device> {
         void CreateCommittedResource(
             D3D12_HEAP_TYPE heap_type,
             SIZE_T size,

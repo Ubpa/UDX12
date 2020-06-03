@@ -7,17 +7,17 @@
 #include <fstream>
 #include <sstream>
 
-using namespace Ubpa;
+using namespace Ubpa::DX12;
 using namespace std;
 
-wstring DX12::AnsiToWString(const string& str)
+wstring Util::AnsiToWString(const string& str)
 {
     WCHAR buffer[512];
     MultiByteToWideChar(CP_ACP, 0, str.c_str(), -1, buffer, 512);
     return wstring(buffer);
 }
 
-DX12::Exception::Exception(HRESULT hr, const std::wstring& functionName, const std::wstring& filename, int lineNumber) :
+Util::Exception::Exception(HRESULT hr, const std::wstring& functionName, const std::wstring& filename, int lineNumber) :
     ErrorCode(hr),
     FunctionName(functionName),
     Filename(filename),
@@ -25,7 +25,7 @@ DX12::Exception::Exception(HRESULT hr, const std::wstring& functionName, const s
 {
 }
 
-std::wstring DX12::Exception::ToString()const
+std::wstring Util::Exception::ToString()const
 {
     // Get the string description of the error code.
     _com_error err(ErrorCode);
@@ -34,17 +34,17 @@ std::wstring DX12::Exception::ToString()const
     return FunctionName + L" failed in " + Filename + L"; line " + std::to_wstring(LineNumber) + L"; error: " + msg;
 }
 
-bool DX12::IsKeyDown(int vkeyCode) {
+bool Util::IsKeyDown(int vkeyCode) {
     return (GetAsyncKeyState(vkeyCode) & 0x8000) != 0;
 }
 
-std::string DX12::HRstToString(HRESULT hr) {
+std::string Util::HRstToString(HRESULT hr) {
     std::stringstream ss;
     ss << "0x" << std::hex << hr << std::endl;
     return ss.str();
 }
 
-Microsoft::WRL::ComPtr<ID3DBlob> DX12::LoadBinary(const std::wstring& filename)
+Microsoft::WRL::ComPtr<ID3DBlob> Util::LoadBinary(const std::wstring& filename)
 {
     std::ifstream fin(filename, std::ios::binary);
 
@@ -61,7 +61,7 @@ Microsoft::WRL::ComPtr<ID3DBlob> DX12::LoadBinary(const std::wstring& filename)
     return blob;
 }
 
-Microsoft::WRL::ComPtr<ID3D12Resource> DX12::CreateDefaultBuffer(
+Microsoft::WRL::ComPtr<ID3D12Resource> Util::CreateDefaultBuffer(
     ID3D12Device* device,
     ID3D12GraphicsCommandList* cmdList,
     const void* initData,
@@ -118,7 +118,7 @@ Microsoft::WRL::ComPtr<ID3D12Resource> DX12::CreateDefaultBuffer(
     return defaultBuffer;
 }
 
-DX12::ComPtr<ID3DBlob> DX12::CompileShader(
+ComPtr<ID3DBlob> Util::CompileShader(
     const std::wstring& filename,
     const D3D_SHADER_MACRO* defines,
     const std::string& entrypoint,

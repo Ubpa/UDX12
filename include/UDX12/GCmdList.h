@@ -6,7 +6,7 @@ namespace Ubpa::DX12 {
     // raw : Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList>
     // .   : simple API
     // ->  : raw API
-    struct GCmdList : ComPtrHolder<ID3D12GraphicsCommandList> {
+    struct GCmdList : Util::ComPtrHolder<ID3D12GraphicsCommandList> {
         void Reset(
             ID3D12CommandAllocator* pAllocator,
             ID3D12PipelineState* pInitialState = nullptr);
