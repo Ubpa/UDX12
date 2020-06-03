@@ -1,26 +1,18 @@
 cmake_minimum_required(VERSION 3.14 FATAL_ERROR)
 
-project(UDX12 VERSION 0.0.1)
+project(UDX12 VERSION 0.0.2)
 message(STATUS "[Project] ${PROJECT_NAME}")
 
-include(FetchContent)
-set(UCMake_VERSION 0.5.5)
-message(STATUS "find package: UCMake ${UCMake_VERSION}")
-find_package(UCMake ${UCMake_VERSION} QUIET)
-if(NOT UCMake_FOUND)
-  message(STATUS "UCMake ${UCMake_VERSION} not found")
-  set(_address "https://github.com/Ubpa/UCMake")
-  message(STATUS "fetch: ${_address} with tag ${UCMake_VERSION}")
-  FetchContent_Declare(
-  UCMake
-  GIT_REPOSITORY ${_address}
-  GIT_TAG ${UCMake_VERSION}
-  )
-  FetchContent_MakeAvailable(UCMake)
-  message(STATUS "UCMake ${UCMake_VERSION} build done")
-endif()
+include(cmake/InitUCMake.cmake)
+Ubpa_InitUCMake()
 
 Ubpa_InitProject()
+
+Ubpa_DownloadZip(
+  https://ubpa.github.io/UData/UDX12/DirectXTK12/DirectXTK12_20200603.zip
+  DirectXTK12.zip
+  SHA256 7AD7FF6131B72D223945BA66AC610230DD492D39D58AF94E839CED5CC7CA3085
+)
 
 Ubpa_AddSubDirsRec(include)
 Ubpa_AddSubDirsRec(src)

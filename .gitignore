@@ -13,6 +13,10 @@ _deps/
 *.gif
 *.dds
 
+*.zip
+*.7z
+*.rar
+
 *.pdf
 
 *.mp4
