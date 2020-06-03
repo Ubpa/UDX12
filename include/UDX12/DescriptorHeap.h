@@ -6,13 +6,27 @@ namespace Ubpa::DX12 {
     // ref: https://docs.microsoft.com/en-us/windows/win32/direct3d12/creating-descriptor-heaps
     struct DescriptorHeap : Util::ComPtrHolder<ID3D12DescriptorHeap>
     {
-        DescriptorHeap() { memset(this, 0, sizeof(*this)); }
+        DescriptorHeap() { memset(this, 0, sizeof(DescriptorHeap)); }
 
         HRESULT Create(
             ID3D12Device* pDevice,
             D3D12_DESCRIPTOR_HEAP_TYPE Type,
             UINT NumDescriptors,
             bool bShaderVisible = false);
+
+        void Clear() {
+            raw.Reset();
+            memset(this, 0, sizeof(DescriptorHeap));
+        }
+
+        UINT Size() {
+            if (IsNull())
+                return 0;
+
+            return raw->GetDesc().NumDescriptors;
+        }
+
+        bool Empty() { return Size() == 0; }
 
         operator ID3D12DescriptorHeap* () { return raw.Get(); }
 

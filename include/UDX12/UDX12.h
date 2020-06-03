@@ -5,4 +5,5 @@
 #include "DescriptorHeap.h"
 #include "Device.h"
 #include "GCmdList.h"
+#include "MeshGeometry.h"
 #include "Util.h"
