@@ -16,14 +16,14 @@ DX12::CPUDescriptorHeap::CPUDescriptorHeap(
     // clang-format off
     m_pDevice{ pDevice },
     m_HeapDesc
-{
-    Type,
-    NumDescriptorsInHeap,
-    Flags,
-    1   // NodeMask
-},
-m_DescriptorSize{ pDevice->GetDescriptorHandleIncrementSize(Type) }
-// clang-format on
+    {
+        Type,
+        NumDescriptorsInHeap,
+        Flags,
+        1   // NodeMask
+    },
+    m_DescriptorSize{ pDevice->GetDescriptorHandleIncrementSize(Type) }
+    // clang-format on
 {
     // Create one pool
     m_HeapPool.emplace_back(m_pDevice, *this, 0, m_HeapDesc);

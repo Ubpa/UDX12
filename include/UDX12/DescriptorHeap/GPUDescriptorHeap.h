@@ -83,6 +83,7 @@ namespace Ubpa::DX12 {
         const D3D12_DESCRIPTOR_HEAP_DESC& GetHeapDesc() const { return m_HeapDesc; }
         uint32_t                          GetMaxStaticDescriptors() const { return m_HeapAllocationManager.GetMaxDescriptors(); }
         uint32_t                          GetMaxDynamicDescriptors() const { return m_DynamicAllocationsManager.GetMaxDescriptors(); }
+        ID3D12DescriptorHeap*             GetDescriptorHeap() const { return m_pd3d12DescriptorHeap.p; }
 
     protected:
         ID3D12Device* m_Device;
