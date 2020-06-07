@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.14 FATAL_ERROR)
 
-project(UDX12 VERSION 0.0.2)
+project(UDX12 VERSION 0.0.3)
 message(STATUS "[Project] ${PROJECT_NAME}")
 
 include(cmake/InitUCMake.cmake)
@@ -13,6 +13,8 @@ Ubpa_DownloadZip(
   DirectXTK12.zip
   SHA256 7AD7FF6131B72D223945BA66AC610230DD492D39D58AF94E839CED5CC7CA3085
 )
+
+Ubpa_AddDep(UContainer 0.0.5)
 
 Ubpa_AddSubDirsRec(include)
 Ubpa_AddSubDirsRec(src)

@@ -18,7 +18,7 @@ namespace Ubpa::DX12 {
             typename = std::enable_if_t<
             sizeof...(Heaps) < static_cast<SIZE_T>(D3D12_DESCRIPTOR_HEAP_TYPE_NUM_TYPES) &&
             (std::is_same_v<Heaps, ID3D12DescriptorHeap>&&...) >>
-            void SetDescriptorHeaps(Heaps*... heaps);
+        void SetDescriptorHeaps(Heaps*... heaps);
 
         void ClearRenderTargetView(D3D12_CPU_DESCRIPTOR_HANDLE RenderTargetView, const FLOAT color[4]);
         void ClearDepthStencilView(D3D12_CPU_DESCRIPTOR_HANDLE DepthStencilView);

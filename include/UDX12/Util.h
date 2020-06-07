@@ -1,9 +1,12 @@
 #pragma once
 
+#define NOMINMAX
+
 #include "_deps/d3dx12.h"
 
 #include <d3dcompiler.h>
 #include <wrl.h>
+#include <atlcomcli.h>
 
 #include <string>
 
@@ -20,6 +23,7 @@
 
 namespace Ubpa::DX12 {
     using Microsoft::WRL::ComPtr;
+    using ATL::CComPtr;
 }
 
 namespace Ubpa::DX12::Util {

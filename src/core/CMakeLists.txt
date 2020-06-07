@@ -8,6 +8,8 @@ Ubpa_AddTarget(
     "include"
   INC_PRIVATE
     "include/UDX12/_deps/DirectXTK12"
+  LIB
+    Ubpa::UContainer_core
   LIB_INTERFACE
     d3dcompiler.lib
 	D3D12.lib
