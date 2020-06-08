@@ -13,10 +13,10 @@ namespace Ubpa::DX12 {
 
         void ResourceBarrier(ID3D12Resource* resource, D3D12_RESOURCE_STATES from, D3D12_RESOURCE_STATES to);
 
-        // different type
+        // D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER
         template<typename... Heaps,
             typename = std::enable_if_t<
-            sizeof...(Heaps) < static_cast<SIZE_T>(D3D12_DESCRIPTOR_HEAP_TYPE_NUM_TYPES) &&
+            sizeof...(Heaps) < static_cast<SIZE_T>(2) &&
             (std::is_same_v<Heaps, ID3D12DescriptorHeap>&&...) >>
         void SetDescriptorHeaps(Heaps*... heaps);
 

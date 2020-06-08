@@ -136,11 +136,11 @@ namespace Ubpa::DX12 {
 
 
         // clang-format off
-        size_t GetNumHandles()          const { return m_NumHandles; }
-        bool   IsNull()                 const { return m_FirstCpuHandle.ptr == 0; }
-        bool   IsShaderVisible()        const { return m_FirstGpuHandle.ptr != 0; }
-        size_t GetAllocationManagerId() const { return m_AllocationManagerId; }
-        UINT   GetDescriptorSize()      const { return m_DescriptorSize; }
+        uint32_t GetNumHandles()          const { return m_NumHandles; }
+        bool     IsNull()                 const { return m_FirstCpuHandle.ptr == 0; }
+        bool     IsShaderVisible()        const { return m_FirstGpuHandle.ptr != 0; }
+        uint16_t GetAllocationManagerId() const { return m_AllocationManagerId; }
+        uint16_t GetDescriptorSize()      const { return m_DescriptorSize; }
         // clang-format on
 
     private:

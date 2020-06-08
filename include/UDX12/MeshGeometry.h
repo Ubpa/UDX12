@@ -35,9 +35,10 @@ namespace Ubpa::DX12 {
 		// It is up to the client to cast appropriately.  
 		Blob VertexBufferCPU{ nullptr };
 		Blob IndexBufferCPU{ nullptr };
-
-		Microsoft::WRL::ComPtr<ID3D12Resource> VertexBufferGPU = nullptr;
-		Microsoft::WRL::ComPtr<ID3D12Resource> IndexBufferGPU = nullptr;
+		BYTE* VertexBufferMappedData{ nullptr }; // only useful for dynamic
+		BYTE* IndexBufferMappedData{ nullptr }; // only useful for dynamic
+		ComPtr<ID3D12Resource> VertexBufferGPU = nullptr;
+		ComPtr<ID3D12Resource> IndexBufferGPU = nullptr;
 
 		// Data about the buffers.
 		UINT VertexByteStride = 0;
@@ -50,11 +51,17 @@ namespace Ubpa::DX12 {
 		// the Submeshes individually.
 		std::unordered_map<std::string, SubmeshGeometry> submeshGeometries;
 
+		// static
 		// idxFormat   : DXGI_FORMAT_R16_UINT / DXGI_FORMAT_R32_UINT
 		// after state : D3D12_RESOURCE_STATE_GENERIC_READ
 		void InitBuffer(ID3D12Device* device, DirectX::ResourceUploadBatch& resourceUpload,
-			const void* vb_data, UINT vb_count, UINT vb_stride, bool vb_static,
-			const void* ib_data, UINT ib_count, DXGI_FORMAT idxFormat, bool ib_static);
+			const void* vb_data, UINT vb_count, UINT vb_stride,
+			const void* ib_data, UINT ib_count, DXGI_FORMAT ib_format);
+
+		// dynamic
+		void InitBuffer(ID3D12Device* device,
+			const void* vb_data, UINT vb_count, UINT vb_stride,
+			const void* ib_data, UINT ib_count, DXGI_FORMAT ib_format);
 
 		D3D12_VERTEX_BUFFER_VIEW VertexBufferView() const
 		{

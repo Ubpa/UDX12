@@ -7,4 +7,5 @@
 #include "Device.h"
 #include "GCmdList.h"
 #include "MeshGeometry.h"
+#include "UploadBuffer.h"
 #include "Util.h"
