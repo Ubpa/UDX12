@@ -2,31 +2,42 @@
 
 using namespace Ubpa;
 
-D3D12_SHADER_RESOURCE_VIEW_DESC DX12::Desc::SRV::Tex2D(ID3D12Resource* pResource) {
-    auto rsrcDesc = pResource->GetDesc();
+D3D12_SHADER_RESOURCE_VIEW_DESC DX12::Desc::SRV::Tex2D(DXGI_FORMAT format) {
 	D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc;
 	ZeroMemory(&srvDesc, sizeof(D3D12_SHADER_RESOURCE_VIEW_DESC));
     srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
-    srvDesc.Format = rsrcDesc.Format;
+    srvDesc.Format = format;
     srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
     srvDesc.Texture2D.MostDetailedMip = 0;
 	srvDesc.Texture2D.PlaneSlice = 0;
-    srvDesc.Texture2D.MipLevels = rsrcDesc.MipLevels;
+    srvDesc.Texture2D.MipLevels = 1;
     srvDesc.Texture2D.ResourceMinLODClamp = 0.0f;
     return srvDesc;
 }
 
-D3D12_SHADER_RESOURCE_VIEW_DESC DX12::Desc::SRV::TexCube(ID3D12Resource* pResource) {
-	auto rsrcDesc = pResource->GetDesc();
+D3D12_SHADER_RESOURCE_VIEW_DESC DX12::Desc::SRV::TexCube(DXGI_FORMAT format) {
 	D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc;
 	ZeroMemory(&srvDesc, sizeof(D3D12_SHADER_RESOURCE_VIEW_DESC));
 	srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
 	srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURECUBE;
 	srvDesc.TextureCube.MostDetailedMip = 0;
-	srvDesc.TextureCube.MipLevels = rsrcDesc.MipLevels;
+	srvDesc.TextureCube.MipLevels = 1;
 	srvDesc.TextureCube.ResourceMinLODClamp = 0.0f;
-	srvDesc.Format = rsrcDesc.Format;
+	srvDesc.Format = format;
 	return srvDesc;
+}
+
+D3D12_DEPTH_STENCIL_VIEW_DESC DX12::Desc::DSV::Basic(DXGI_FORMAT format) {
+	D3D12_DEPTH_STENCIL_VIEW_DESC dsvDesc;
+
+	ZeroMemory(&dsvDesc, sizeof(D3D12_DEPTH_STENCIL_VIEW_DESC));
+
+	dsvDesc.Flags = D3D12_DSV_FLAG_NONE;
+	dsvDesc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2D;
+	dsvDesc.Format = format;
+	dsvDesc.Texture2D.MipSlice = 0;
+
+	return dsvDesc;
 }
 
 D3D12_GRAPHICS_PIPELINE_STATE_DESC DX12::Desc::PSO::Basic(
@@ -57,4 +68,37 @@ D3D12_GRAPHICS_PIPELINE_STATE_DESC DX12::Desc::PSO::Basic(
 	psoDesc.DSVFormat = DXGI_FORMAT_D24_UNORM_S8_UINT;
 
 	return psoDesc;
+}
+
+D3D12_RESOURCE_DESC DX12::Desc::RSRC::Basic(
+	D3D12_RESOURCE_DIMENSION dimension,
+	UINT64 Width,
+	UINT Height,
+	DXGI_FORMAT format,
+	D3D12_RESOURCE_FLAGS flags)
+{
+	D3D12_RESOURCE_DESC desc;
+	ZeroMemory(&desc, sizeof(D3D12_RESOURCE_DESC));
+
+	desc.Dimension = dimension;
+	desc.Alignment = 0;
+	desc.Width = Width;
+	desc.Height = Height;
+	desc.DepthOrArraySize = 1;
+	desc.MipLevels = 1;
+	desc.Format = format;
+	desc.SampleDesc.Count = 1;
+	desc.SampleDesc.Quality = 0;
+	desc.Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN;
+	desc.Flags = flags;
+
+	return desc;
+}
+
+D3D12_RESOURCE_DESC DX12::Desc::RSRC::RT2D(
+	UINT64 Width,
+	UINT Height,
+	DXGI_FORMAT format)
+{
+	return Basic(D3D12_RESOURCE_DIMENSION_TEXTURE2D, Width, Height, format, D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET);
 }
