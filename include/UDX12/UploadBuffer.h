@@ -27,6 +27,7 @@ namespace Ubpa::DX12 {
 		bool IsConstantBuffer() const noexcept { return isConstantBuffer; }
 	private:
 		static constexpr UINT ElementSize(bool isConstantBuffer);
+		UINT64 numElement;
 		bool isConstantBuffer;
 	};
 }

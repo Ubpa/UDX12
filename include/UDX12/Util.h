@@ -1,7 +1,5 @@
 #pragma once
 
-#define NOMINMAX
-
 #include "_deps/d3dx12.h"
 
 #include <d3dcompiler.h>
@@ -93,7 +91,7 @@ namespace Ubpa::DX12::Util {
     // - entrypoint: begin function name, like 'main'
     // - target: e.g. cs/ds/gs/hs/ps/vs + _5_ + 0/1
     // [ref] https://docs.microsoft.com/en-us/windows/win32/api/d3dcompiler/nf-d3dcompiler-d3dcompilefromfile
-    ComPtr<ID3DBlob> CompileShader(
+    ID3DBlob* CompileShader(
         const std::wstring& filename,
         const D3D_SHADER_MACRO* defines,
         const std::string& entrypoint,

@@ -118,7 +118,7 @@ Microsoft::WRL::ComPtr<ID3D12Resource> Util::CreateDefaultBuffer(
     return defaultBuffer;
 }
 
-ComPtr<ID3DBlob> Util::CompileShader(
+ID3DBlob* Util::CompileShader(
     const std::wstring& filename,
     const D3D_SHADER_MACRO* defines,
     const std::string& entrypoint,
@@ -131,7 +131,7 @@ ComPtr<ID3DBlob> Util::CompileShader(
 
     HRESULT hr = S_OK;
 
-    ComPtr<ID3DBlob> byteCode = nullptr;
+    ID3DBlob* byteCode = nullptr;
     ComPtr<ID3DBlob> errors;
     hr = D3DCompileFromFile(filename.c_str(), defines, D3D_COMPILE_STANDARD_FILE_INCLUDE,
         entrypoint.c_str(), target.c_str(), compileFlags, 0, &byteCode, &errors);
