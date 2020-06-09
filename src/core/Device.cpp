@@ -34,6 +34,6 @@ void DX12::Device::CreateSRV_Tex2D(
     ID3D12Resource* pResource,
     D3D12_CPU_DESCRIPTOR_HANDLE DestDescriptor)
 {
-    D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = Desc::SRC::Tex2D(pResource);
+    D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = Desc::SRV::Tex2D(pResource);
     raw->CreateShaderResourceView(pResource, &srvDesc, DestDescriptor);
 }

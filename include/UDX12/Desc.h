@@ -3,8 +3,9 @@
 #include "Util.h"
 
 namespace Ubpa::DX12::Desc {
-    namespace SRC {
+    namespace SRV {
         D3D12_SHADER_RESOURCE_VIEW_DESC Tex2D(ID3D12Resource* pResource);
+        D3D12_SHADER_RESOURCE_VIEW_DESC TexCube(ID3D12Resource* pResource);
     }
 
     namespace PSO {
