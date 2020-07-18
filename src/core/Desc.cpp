@@ -48,6 +48,23 @@ D3D12_GRAPHICS_PIPELINE_STATE_DESC DX12::Desc::PSO::Basic(
     DXGI_FORMAT rtvFormat,
     DXGI_FORMAT dsvFormat)
 {
+	return MRT(rootSig,
+		pInputElementDescs, NumElements,
+		VS, PS,
+		1,
+		rtvFormat,
+		dsvFormat);
+}
+
+D3D12_GRAPHICS_PIPELINE_STATE_DESC DX12::Desc::PSO::MRT(
+	ID3D12RootSignature* rootSig,
+	D3D12_INPUT_ELEMENT_DESC* pInputElementDescs, UINT NumElements,
+	ID3DBlob* VS,
+	ID3DBlob* PS,
+	UINT rtNum,
+	DXGI_FORMAT rtvFormat,
+	DXGI_FORMAT dsvFormat)
+{
 	D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc;
 
 	ZeroMemory(&psoDesc, sizeof(D3D12_GRAPHICS_PIPELINE_STATE_DESC));
@@ -61,11 +78,12 @@ D3D12_GRAPHICS_PIPELINE_STATE_DESC DX12::Desc::PSO::Basic(
 	psoDesc.DepthStencilState = CD3DX12_DEPTH_STENCIL_DESC(D3D12_DEFAULT);
 	psoDesc.SampleMask = UINT_MAX;
 	psoDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
-	psoDesc.NumRenderTargets = 1;
-	psoDesc.RTVFormats[0] = rtvFormat;
+	psoDesc.NumRenderTargets = rtNum;
+	for (UINT i = 0; i < rtNum; i++)
+		psoDesc.RTVFormats[i] = rtvFormat;
 	psoDesc.SampleDesc.Count = 1;
 	psoDesc.SampleDesc.Quality = 0;
-	psoDesc.DSVFormat = DXGI_FORMAT_D24_UNORM_S8_UINT;
+	psoDesc.DSVFormat = dsvFormat;
 
 	return psoDesc;
 }
