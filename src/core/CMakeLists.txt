@@ -5,9 +5,9 @@ Ubpa_AddTarget(
     "${PROJECT_SOURCE_DIR}/include/UDX12"
     "_deps/DirectXTK12/Shaders/Compiled/SpriteEffect_SpriteVertexShader.inc"
   INC
-    "include"
+    "${PROJECT_SOURCE_DIR}/include"
   INC_PRIVATE
-    "include/UDX12/_deps/DirectXTK12"
+    "${PROJECT_SOURCE_DIR}/include/UDX12/_deps/DirectXTK12"
   LIB
     Ubpa::UContainer_core
   LIB_INTERFACE

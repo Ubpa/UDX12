@@ -6,7 +6,6 @@
 
 #pragma once
 
-#include "DDSTextureLoader.h"
 #include "MathHelper.h"
 
 #include <UDX12/_deps/d3dx12.h>
