@@ -2,7 +2,7 @@
 
 #include "Util.h"
 
-namespace Ubpa::DX12 {
+namespace Ubpa::UDX12 {
     // ID3DBlob is a CPU buffer wrapper
     // raw : Microsoft::WRL::ComPtr<ID3DBlob>
     // .   : simple API

@@ -4,7 +4,7 @@
 
 using namespace Ubpa;
 
-void DX12::CmdQueue::Execute(ID3D12GraphicsCommandList* list) {
+void UDX12::CmdQueue::Execute(ID3D12GraphicsCommandList* list) {
 	const std::array<ID3D12CommandList*, 1> listArr = { list };
 	raw->ExecuteCommandLists(1, listArr.data());
 }

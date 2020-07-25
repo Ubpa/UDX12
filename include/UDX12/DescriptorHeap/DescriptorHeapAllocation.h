@@ -7,7 +7,7 @@
 
 #include "IDescriptorAllocator.h"
 
-namespace Ubpa::DX12 {
+namespace Ubpa::UDX12 {
     // The class represents descriptor heap allocation (continuous descriptor range in a descriptor heap)
     //
     //                  m_FirstCpuHandle

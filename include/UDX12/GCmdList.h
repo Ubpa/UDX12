@@ -2,7 +2,7 @@
 
 #include "Util.h"
 
-namespace Ubpa::DX12 {
+namespace Ubpa::UDX12 {
     // raw : Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList>
     // .   : simple API
     // ->  : raw API

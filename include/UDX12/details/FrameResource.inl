@@ -1,6 +1,6 @@
 #pragma once
 
-namespace Ubpa::DX12 {
+namespace Ubpa::UDX12 {
 	template<typename T>
 	T* FrameResource::GetResource(const std::string& name) const {
 		assert(HaveResource(name));

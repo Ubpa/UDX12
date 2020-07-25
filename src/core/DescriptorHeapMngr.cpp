@@ -2,7 +2,7 @@
 
 using namespace Ubpa;
 
-void DX12::DescriptorHeapMngr::Init(
+void UDX12::DescriptorHeapMngr::Init(
 	ID3D12Device* device,
 	uint32_t numCpuCSU,
 	uint32_t numCpuRTV,
@@ -40,7 +40,7 @@ void DX12::DescriptorHeapMngr::Init(
 	isInit = true;
 }
 
-DX12::DescriptorHeapMngr::~DescriptorHeapMngr() {
+UDX12::DescriptorHeapMngr::~DescriptorHeapMngr() {
 	delete CSU_CpuDH;
 	delete RTV_CpuDH;
 	delete DSV_CpuDH;

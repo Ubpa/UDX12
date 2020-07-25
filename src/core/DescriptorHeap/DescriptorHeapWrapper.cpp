@@ -2,7 +2,7 @@
 
 using namespace Ubpa;
 
-HRESULT DX12::DescriptorHeapWrapper::Create(
+HRESULT UDX12::DescriptorHeapWrapper::Create(
     ID3D12Device* pDevice,
     const D3D12_DESCRIPTOR_HEAP_DESC* desc)
 {
@@ -16,7 +16,7 @@ HRESULT DX12::DescriptorHeapWrapper::Create(
     return hr;
 }
 
-HRESULT DX12::DescriptorHeapWrapper::Create(
+HRESULT UDX12::DescriptorHeapWrapper::Create(
     ID3D12Device* pDevice,
     D3D12_DESCRIPTOR_HEAP_TYPE Type,
     UINT NumDescriptors,

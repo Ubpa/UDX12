@@ -1,6 +1,6 @@
 #pragma once
 
-namespace Ubpa::DX12 {
+namespace Ubpa::UDX12 {
     template<typename... Heaps, typename>
     void GCmdList::SetDescriptorHeaps(Heaps*... heaps){
         constexpr size_t N = sizeof...(Heaps);

@@ -2,7 +2,7 @@
 
 #include "../Util.h"
 
-namespace Ubpa::DX12 {
+namespace Ubpa::UDX12 {
     // ref: https://docs.microsoft.com/en-us/windows/win32/direct3d12/creating-descriptor-heaps
     struct DescriptorHeapWrapper : Util::ComPtrHolder<ID3D12DescriptorHeap>
     {

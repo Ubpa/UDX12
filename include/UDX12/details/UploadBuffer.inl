@@ -1,6 +1,6 @@
 #pragma once
 
-namespace Ubpa::DX12 {
+namespace Ubpa::UDX12 {
 	template<typename T>
 	constexpr UINT ArrayUploadBuffer<T>::ElementSize(bool isConstantBuffer) {
 		return isConstantBuffer ? Util::CalcConstantBufferByteSize(sizeof(T)) : sizeof(T);

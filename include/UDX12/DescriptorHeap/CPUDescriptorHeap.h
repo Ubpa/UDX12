@@ -10,7 +10,7 @@
 
 #include <unordered_set>
 
-namespace Ubpa::DX12 {
+namespace Ubpa::UDX12 {
 	// CPU descriptor heap is intended to provide storage for resource view descriptor handles.
     // It contains a pool of DescriptorHeapAllocationManager object instances, where every instance manages
     // its own CPU-only D3D12 descriptor heap:

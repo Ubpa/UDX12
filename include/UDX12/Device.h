@@ -2,7 +2,7 @@
 
 #include "Util.h"
 
-namespace Ubpa::DX12 {
+namespace Ubpa::UDX12 {
     // raw : Microsoft::WRL::ComPtr<ID3D12Device>
     // .   : simple API
     // ->  : raw API

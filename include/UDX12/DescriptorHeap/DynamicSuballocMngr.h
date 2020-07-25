@@ -8,7 +8,7 @@
 #include "IDescriptorAllocator.h"
 #include "GPUDescriptorHeap.h"
 
-namespace Ubpa::DX12 {
+namespace Ubpa::UDX12 {
     // The class facilitates allocation of dynamic descriptor handles. It requests a chunk of heap
     // from the master GPU descriptor heap and then performs linear suballocation within the chunk
     // At the end of the frame all allocations are disposed.

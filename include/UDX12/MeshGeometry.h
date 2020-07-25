@@ -10,7 +10,7 @@
 
 #include <unordered_map>
 
-namespace Ubpa::DX12 {
+namespace Ubpa::UDX12 {
 	// Defines a subrange of geometry in a MeshGeometry.  This is for when multiple
 	// geometries are stored in one vertex and index buffer.  It provides the offsets
 	// and data needed to draw a subset of geometry stores in the vertex and index 

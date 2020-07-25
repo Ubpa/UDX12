@@ -7,7 +7,7 @@
 #include <fstream>
 #include <sstream>
 
-using namespace Ubpa::DX12;
+using namespace Ubpa::UDX12;
 using namespace std;
 
 wstring Util::AnsiToWString(const string& str)

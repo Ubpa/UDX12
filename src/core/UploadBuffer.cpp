@@ -2,7 +2,7 @@
 
 using namespace Ubpa;
 
-DX12::UploadBuffer::UploadBuffer(ID3D12Device* device, UINT64 size, D3D12_RESOURCE_FLAGS flag) {
+UDX12::UploadBuffer::UploadBuffer(ID3D12Device* device, UINT64 size, D3D12_RESOURCE_FLAGS flag) {
     ThrowIfFailed(device->CreateCommittedResource(
         &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD),
         D3D12_HEAP_FLAG_NONE,
@@ -14,6 +14,6 @@ DX12::UploadBuffer::UploadBuffer(ID3D12Device* device, UINT64 size, D3D12_RESOUR
     ThrowIfFailed(resource->Map(0, nullptr, reinterpret_cast<void**>(&mappedData)));
 }
 
-void DX12::UploadBuffer::Set(UINT64 offset, const void* data, UINT64 size) {
+void UDX12::UploadBuffer::Set(UINT64 offset, const void* data, UINT64 size) {
     memcpy(mappedData + offset, data, size);
 }

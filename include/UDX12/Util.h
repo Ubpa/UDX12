@@ -11,20 +11,20 @@
 #include <cassert>
 
 #ifndef ThrowIfFailed
-#define ThrowIfFailed(x)                                                              \
-{                                                                                     \
-    HRESULT hr__ = (x);                                                               \
-    std::wstring wfn = Ubpa::DX12::Util::AnsiToWString(__FILE__);                     \
-    if(FAILED(hr__)) { throw Ubpa::DX12::Util::Exception(hr__, L#x, wfn, __LINE__); } \
+#define ThrowIfFailed(x)                                                               \
+{                                                                                      \
+    HRESULT hr__ = (x);                                                                \
+    std::wstring wfn = Ubpa::UDX12::Util::AnsiToWString(__FILE__);                     \
+    if(FAILED(hr__)) { throw Ubpa::UDX12::Util::Exception(hr__, L#x, wfn, __LINE__); } \
 }
 #endif
 
-namespace Ubpa::DX12 {
+namespace Ubpa::UDX12 {
     using Microsoft::WRL::ComPtr;
     using ATL::CComPtr;
 }
 
-namespace Ubpa::DX12::Util {
+namespace Ubpa::UDX12::Util {
 
     std::wstring AnsiToWString(const std::string& str);
 

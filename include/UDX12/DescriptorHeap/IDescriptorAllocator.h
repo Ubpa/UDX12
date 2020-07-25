@@ -6,7 +6,7 @@
 
 #include "../Util.h"
 
-namespace Ubpa::DX12 {
+namespace Ubpa::UDX12 {
     class DescriptorHeapAllocation;
     class DescriptorHeapAllocMngr;
     class RenderpDevice;

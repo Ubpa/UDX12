@@ -2,17 +2,17 @@
 
 using namespace Ubpa;
 
-DX12::FrameResource::~FrameResource() {
+UDX12::FrameResource::~FrameResource() {
     for (const auto& [name, ptr] : resourceMap)
         deletorMap[ptr](ptr);
 }
 
-void DX12::FrameResource::Signal(ID3D12CommandQueue* cmdQueue, UINT64 cpuFence) {
+void UDX12::FrameResource::Signal(ID3D12CommandQueue* cmdQueue, UINT64 cpuFence) {
 	this->cpuFence = cpuFence;
 	cmdQueue->Signal(gpuFence, cpuFence);
 }
 
-void DX12::FrameResource::Wait() {
+void UDX12::FrameResource::Wait() {
     if (cpuFence == 0 || gpuFence->GetCompletedValue() >= cpuFence)
         return;
 
@@ -30,7 +30,7 @@ void DX12::FrameResource::Wait() {
     delayUpdateResources.clear();
 }
 
-DX12::FrameResource& DX12::FrameResource::RegisterResource(
+UDX12::FrameResource& UDX12::FrameResource::RegisterResource(
     std::string name,
     void* pResource,
     std::function<void(void*)> deletor)
@@ -41,7 +41,7 @@ DX12::FrameResource& DX12::FrameResource::RegisterResource(
     return *this;
 }
 
-DX12::FrameResource& DX12::FrameResource::RegisterTemporalResource(
+UDX12::FrameResource& UDX12::FrameResource::RegisterTemporalResource(
     std::string name,
     void* pResource,
     std::function<void(void*)> deletor)
@@ -52,7 +52,7 @@ DX12::FrameResource& DX12::FrameResource::RegisterTemporalResource(
     return *this;
 }
 
-DX12::FrameResource& DX12::FrameResource::UnregisterResource(const std::string& name) {
+UDX12::FrameResource& UDX12::FrameResource::UnregisterResource(const std::string& name) {
     assert(HaveResource(name));
     auto ptr = resourceMap[name];
     deletorMap[ptr](ptr);
@@ -61,13 +61,13 @@ DX12::FrameResource& DX12::FrameResource::UnregisterResource(const std::string& 
     return *this;
 }
 
-DX12::FrameResource& DX12::FrameResource::DelayUnregisterResource(std::string name) {
+UDX12::FrameResource& UDX12::FrameResource::DelayUnregisterResource(std::string name) {
     assert(HaveResource(name));
     delayUnregisterResources.emplace_back(std::move(name));
     return *this;
 }
 
-DX12::FrameResource& DX12::FrameResource::DelayUpdateResource(std::string name, std::function<void(void*)> updator) {
+UDX12::FrameResource& UDX12::FrameResource::DelayUpdateResource(std::string name, std::function<void(void*)> updator) {
     assert(HaveResource(name));
     delayUpdateResources.emplace_back(std::move(name), std::move(updator));
     return *this;

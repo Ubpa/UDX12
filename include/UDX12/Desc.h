@@ -2,7 +2,7 @@
 
 #include "Util.h"
 
-namespace Ubpa::DX12::Desc {
+namespace Ubpa::UDX12::Desc {
     namespace SRV {
         D3D12_SHADER_RESOURCE_VIEW_DESC Tex2D(DXGI_FORMAT format);
         D3D12_SHADER_RESOURCE_VIEW_DESC TexCube(DXGI_FORMAT format);

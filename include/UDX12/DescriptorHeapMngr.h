@@ -7,7 +7,7 @@
 #include "DescriptorHeap/GPUDescriptorHeap.h"
 #include "DescriptorHeap/IDescriptorAllocator.h"
 
-namespace Ubpa::DX12 {
+namespace Ubpa::UDX12 {
 	class DescriptorHeapMngr {
 	public:
 		static DescriptorHeapMngr& Instance() noexcept {

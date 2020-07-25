@@ -4,7 +4,7 @@
 
 using namespace Ubpa;
 
-void DX12::MeshGeometry::InitBuffer(
+void UDX12::MeshGeometry::InitBuffer(
 	ID3D12Device* device, DirectX::ResourceUploadBatch& resourceUpload,
 	const void* vb_data, UINT vb_count, UINT vb_stride,
 	const void* ib_data, UINT ib_count, DXGI_FORMAT ib_format)
@@ -31,7 +31,7 @@ void DX12::MeshGeometry::InitBuffer(
 	IndexBufferByteSize = ib_size;
 }
 
-void DX12::MeshGeometry::InitBuffer(ID3D12Device* device,
+void UDX12::MeshGeometry::InitBuffer(ID3D12Device* device,
 	const void* vb_data, UINT vb_count, UINT vb_stride,
 	const void* ib_data, UINT ib_count, DXGI_FORMAT ib_format)
 {

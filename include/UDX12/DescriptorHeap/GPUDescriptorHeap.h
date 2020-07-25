@@ -9,7 +9,7 @@
 #include "DescriptorHeapAllocation.h"
 #include "DescriptorHeapAllocMngr.h"
 
-namespace Ubpa::DX12 {
+namespace Ubpa::UDX12 {
 	// GPU descriptor heap provides storage for shader-visible descriptors
     // The heap contains single D3D12 descriptor heap that is split into two parts.
     // The first part stores static and mutable resource descriptor handles.

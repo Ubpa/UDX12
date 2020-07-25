@@ -11,7 +11,7 @@
 
 #include <mutex>
 
-namespace Ubpa::DX12 {
+namespace Ubpa::UDX12 {
     // The class performs suballocations within one D3D12 descriptor heap.
     // It uses VariableSizeAllocationsManager to manage free space in the heap
     //

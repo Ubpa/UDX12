@@ -4,7 +4,7 @@
 
 using namespace Ubpa;
 
-void DX12::Device::CreateCommittedResource(
+void UDX12::Device::CreateCommittedResource(
     D3D12_HEAP_TYPE heap_type,
     SIZE_T size,
     ID3D12Resource** resources)
@@ -18,7 +18,7 @@ void DX12::Device::CreateCommittedResource(
         IID_PPV_ARGS(resources)));
 }
 
-void DX12::Device::CreateDescriptorHeap(UINT size, D3D12_DESCRIPTOR_HEAP_TYPE type,
+void UDX12::Device::CreateDescriptorHeap(UINT size, D3D12_DESCRIPTOR_HEAP_TYPE type,
     ID3D12DescriptorHeap** pHeap)
 {
     D3D12_DESCRIPTOR_HEAP_DESC cbvHeapDesc;
@@ -30,7 +30,7 @@ void DX12::Device::CreateDescriptorHeap(UINT size, D3D12_DESCRIPTOR_HEAP_TYPE ty
         IID_PPV_ARGS(pHeap)));
 }
 
-void DX12::Device::CreateSRV_Tex2D(
+void UDX12::Device::CreateSRV_Tex2D(
     ID3D12Resource* pResource,
     D3D12_CPU_DESCRIPTOR_HANDLE DestDescriptor)
 {

@@ -2,7 +2,7 @@
 
 #include "Util.h"
 
-namespace Ubpa::DX12 {
+namespace Ubpa::UDX12 {
 	class UploadBuffer {
 	public:
 		UploadBuffer(ID3D12Device* device, UINT64 size, D3D12_RESOURCE_FLAGS flag = D3D12_RESOURCE_FLAG_NONE);

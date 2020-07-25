@@ -4,7 +4,7 @@
 #include <functional>
 #include <unordered_map>
 
-namespace Ubpa::DX12 {
+namespace Ubpa::UDX12 {
 	class FrameResource {
 	public:
 		FrameResource(ID3D12Fence* gpuFence) : gpuFence{ gpuFence } {}
