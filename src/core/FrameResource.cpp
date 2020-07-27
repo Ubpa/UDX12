@@ -4,7 +4,7 @@ using namespace Ubpa;
 
 UDX12::FrameResource::~FrameResource() {
     for (const auto& [name, ptr] : resourceMap)
-        deletorMap[ptr](ptr);
+        deletorMap.find(ptr)->second(ptr);
 }
 
 void UDX12::FrameResource::Signal(ID3D12CommandQueue* cmdQueue, UINT64 cpuFence) {
@@ -52,12 +52,18 @@ UDX12::FrameResource& UDX12::FrameResource::RegisterTemporalResource(
     return *this;
 }
 
-UDX12::FrameResource& UDX12::FrameResource::UnregisterResource(const std::string& name) {
+UDX12::FrameResource& UDX12::FrameResource::UnregisterResource(std::string_view name) {
     assert(HaveResource(name));
-    auto ptr = resourceMap[name];
-    deletorMap[ptr](ptr);
-    deletorMap.erase(ptr);
-    resourceMap.erase(name);
+
+    auto target_ptr = resourceMap.find(name);
+    auto ptr = target_ptr->second;
+    auto target_deletor = deletorMap.find(ptr);
+
+    target_deletor->second(ptr);
+
+    resourceMap.erase(target_ptr);
+    deletorMap.erase(target_deletor);
+
     return *this;
 }
 
