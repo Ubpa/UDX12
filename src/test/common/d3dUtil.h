@@ -31,7 +31,7 @@
 #include <sstream>
 #include <cassert>
 
-extern const int gNumFrameResources;
+extern const int gNumFrameRsrcMngrs;
 
 inline void d3dSetDebugName(IDXGIObject* obj, const char* name)
 {
@@ -232,10 +232,10 @@ struct Material
 	int NormalSrvHeapIndex = -1;
 
 	// Dirty flag indicating the material has changed and we need to update the constant buffer.
-	// Because we have a material constant buffer for each FrameResource, we have to apply the
-	// update to each FrameResource.  Thus, when we modify a material we should set 
-	// NumFramesDirty = gNumFrameResources so that each frame resource gets the update.
-	int NumFramesDirty = gNumFrameResources;
+	// Because we have a material constant buffer for each FrameRsrcMngr, we have to apply the
+	// update to each FrameRsrcMngr.  Thus, when we modify a material we should set 
+	// NumFramesDirty = gNumFrameRsrcMngrs so that each frame resource gets the update.
+	int NumFramesDirty = gNumFrameRsrcMngrs;
 
 	// Material constant buffer data used for shading.
 	DirectX::XMFLOAT4 DiffuseAlbedo = { 1.0f, 1.0f, 1.0f, 1.0f };

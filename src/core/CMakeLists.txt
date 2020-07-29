@@ -10,6 +10,8 @@ Ubpa_AddTarget(
     "${PROJECT_SOURCE_DIR}/include/UDX12/_deps/DirectXTK12"
   LIB
     Ubpa::UContainer_core
+    Ubpa::UTemplate_core
+    Ubpa::UFG_core
   LIB_INTERFACE
     d3dcompiler.lib
 	D3D12.lib
