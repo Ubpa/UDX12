@@ -3,4 +3,6 @@ Ubpa_AddTarget(
   TEST
   MODE STATIC
   LIB ${core}
+  L_OPTION_INTERFACE
+    /SUBSYSTEM:WINDOWS
 )
