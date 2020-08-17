@@ -6,12 +6,16 @@ namespace Ubpa::UDX12 {
     // raw : Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList>
     // .   : simple API
     // ->  : raw API
-    struct GCmdList : Util::ComPtrHolder<ID3D12GraphicsCommandList> {
-        void Reset(
-            ID3D12CommandAllocator* pAllocator,
-            ID3D12PipelineState* pInitialState = nullptr);
+	struct GCmdList : Util::ComPtrHolder<ID3D12GraphicsCommandList> {
+		using Util::ComPtrHolder<ID3D12GraphicsCommandList>::ComPtrHolder;
 
-        void ResourceBarrier(ID3D12Resource* resource, D3D12_RESOURCE_STATES from, D3D12_RESOURCE_STATES to);
+        void Reset(ID3D12CommandAllocator* pAllocator);
+
+        void ResourceBarrierTransition(
+            ID3D12Resource* resource,
+            D3D12_RESOURCE_STATES from,
+            D3D12_RESOURCE_STATES to
+        );
 
         // D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER
         template<typename... Heaps,

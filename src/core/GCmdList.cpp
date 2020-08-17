@@ -2,14 +2,18 @@
 
 using namespace Ubpa;
 
-void UDX12::GCmdList::Reset(ID3D12CommandAllocator* pAllocator,
-    ID3D12PipelineState* pInitialState) {
-    ThrowIfFailed(raw->Reset(pAllocator, pInitialState));
+void UDX12::GCmdList::Reset(ID3D12CommandAllocator* pAllocator) {
+    ThrowIfFailed(raw->Reset(pAllocator, nullptr));
 }
 
-void UDX12::GCmdList::ResourceBarrier(ID3D12Resource* resource, D3D12_RESOURCE_STATES from, D3D12_RESOURCE_STATES to) {
-    raw->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(resource,
-        from, to));
+void UDX12::GCmdList::ResourceBarrierTransition(ID3D12Resource* resource, D3D12_RESOURCE_STATES from, D3D12_RESOURCE_STATES to) {
+    raw->ResourceBarrier(
+        1,
+        &CD3DX12_RESOURCE_BARRIER::Transition(
+            resource,
+            from, to
+        )
+    );
 }
 
 void UDX12::GCmdList::RSSetViewport(D3D12_VIEWPORT viewport) {

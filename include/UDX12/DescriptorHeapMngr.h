@@ -29,6 +29,8 @@ namespace Ubpa::UDX12 {
 		CPUDescriptorHeap* GetDSVCpuDH() noexcept { assert(isInit); return DSV_CpuDH; }
 		GPUDescriptorHeap* GetCSUGpuDH() noexcept { assert(isInit); return CSU_GpuDH; }
 
+		void Clear();
+
 	private:
 		DescriptorHeapMngr() = default;
 		~DescriptorHeapMngr();

@@ -236,7 +236,7 @@ void RsrcMngr::Destruct(size_t rsrcNodeIdx) {
 	else {
 		auto orig_state = importeds[rsrcNodeIdx].state;
 		if (view.state != orig_state) {
-			uGCmdList.ResourceBarrier(
+			uGCmdList.ResourceBarrierTransition(
 				view.pRsrc,
 				view.state,
 				orig_state);
@@ -246,6 +246,7 @@ void RsrcMngr::Destruct(size_t rsrcNodeIdx) {
 }
 
 void RsrcMngr::Move(size_t dstRsrcNodeIdx, size_t srcRsrcNodeIdx) {
+	assert(dstRsrcNodeIdx != srcRsrcNodeIdx);
 	actives[dstRsrcNodeIdx] = actives[srcRsrcNodeIdx];
 	actives.erase(srcRsrcNodeIdx);
 }
@@ -458,7 +459,7 @@ PassRsrcs RsrcMngr::RequestPassRsrcs(size_t passNodeIdx) {
 		auto& handles = handleMap[rsrcNodeIdx];
 
 		if (view.state != state) {
-			uGCmdList.ResourceBarrier(
+			uGCmdList.ResourceBarrierTransition(
 				view.pRsrc,
 				view.state,
 				state);

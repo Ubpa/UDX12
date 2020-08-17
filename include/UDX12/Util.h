@@ -30,6 +30,7 @@ namespace Ubpa::UDX12::Util {
 
     template<typename T>
     struct ComPtrHolder {
+        ComPtrHolder(ComPtr<T> ptr = {}) : raw{ ptr } {}
         ComPtr<T> raw;
         T* operator->() noexcept { return raw.Get(); }
         const T* operator->() const noexcept { return raw.Get(); }
@@ -91,9 +92,17 @@ namespace Ubpa::UDX12::Util {
     // - entrypoint: begin function name, like 'main'
     // - target: e.g. cs/ds/gs/hs/ps/vs + _5_ + 0/1
     // [ref] https://docs.microsoft.com/en-us/windows/win32/api/d3dcompiler/nf-d3dcompiler-d3dcompilefromfile
-    ID3DBlob* CompileShader(
+    ComPtr<ID3DBlob> CompileShaderFromFile(
         const std::wstring& filename,
         const D3D_SHADER_MACRO* defines,
         const std::string& entrypoint,
-        const std::string& target);
+        const std::string& target
+    );
+
+	ComPtr<ID3DBlob> CompileShader(
+		std::string_view source,
+		const D3D_SHADER_MACRO* defines,
+		const std::string& entrypoint,
+		const std::string& target
+	);
 }

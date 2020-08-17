@@ -40,9 +40,20 @@ void UDX12::DescriptorHeapMngr::Init(
 	isInit = true;
 }
 
-UDX12::DescriptorHeapMngr::~DescriptorHeapMngr() {
+void UDX12::DescriptorHeapMngr::Clear() {
+	isInit = false;
+
 	delete CSU_CpuDH;
 	delete RTV_CpuDH;
 	delete DSV_CpuDH;
 	delete CSU_GpuDH;
+
+	CSU_CpuDH = nullptr;
+	RTV_CpuDH = nullptr;
+	DSV_CpuDH = nullptr;
+	CSU_GpuDH = nullptr;
+}
+
+UDX12::DescriptorHeapMngr::~DescriptorHeapMngr() {
+	Clear();
 }

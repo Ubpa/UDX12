@@ -145,18 +145,10 @@ namespace Ubpa::UDX12::FG {
 			CpuInfo    null_info_dsv;
 			CpuInfo    null_info_rtv;
 
-			bool HaveNullSrv() const {
-				return null_info_srv.cpuHandle.ptr != 0;
-			}
-			bool HaveNullUav() const {
-				return null_info_uav.cpuHandle.ptr != 0;
-			}
-			bool HaveNullDsv() const {
-				return null_info_dsv.cpuHandle.ptr != 0;
-			}
-			bool HaveNullRtv() const {
-				return null_info_rtv.cpuHandle.ptr != 0;
-			}
+			bool HaveNullSrv() const { return null_info_srv.cpuHandle.ptr != 0; }
+			bool HaveNullUav() const { return null_info_uav.cpuHandle.ptr != 0; }
+			bool HaveNullDsv() const { return null_info_dsv.cpuHandle.ptr != 0; }
+			bool HaveNullRtv() const { return null_info_rtv.cpuHandle.ptr != 0; }
 		};
 
 		// rsrcNodeIdx -> handles
