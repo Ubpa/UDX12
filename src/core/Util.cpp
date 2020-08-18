@@ -1,5 +1,7 @@
 #include <UDX12/Util.h>
 
+#include <UDX12/D3DInclude.h>
+
 #include <comdef.h>
 
 #include <stringapiset.h>
@@ -149,7 +151,8 @@ ComPtr<ID3DBlob> Util::CompileShader(
     std::string_view source,
     const D3D_SHADER_MACRO* defines,
     const std::string& entrypoint,
-    const std::string& target
+	const std::string& target,
+	D3DInclude* pInclude
 ) {
 	UINT compileFlags = 0;
 #if defined(DEBUG) || defined(_DEBUG)  
@@ -160,7 +163,7 @@ ComPtr<ID3DBlob> Util::CompileShader(
 
 	ComPtr<ID3DBlob> byteCode;
 	ComPtr<ID3DBlob> errors;
-    hr = D3DCompile(source.data(), source.size(), nullptr, defines, D3D_COMPILE_STANDARD_FILE_INCLUDE,
+    hr = D3DCompile(source.data(), source.size(), nullptr, defines, pInclude,
 		entrypoint.c_str(), target.c_str(), compileFlags, 0, &byteCode, &errors);
 
 	if (errors != nullptr)

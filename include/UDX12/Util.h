@@ -22,6 +22,7 @@
 namespace Ubpa::UDX12 {
     using Microsoft::WRL::ComPtr;
     using ATL::CComPtr;
+    class D3DInclude;
 }
 
 namespace Ubpa::UDX12::Util {
@@ -103,6 +104,7 @@ namespace Ubpa::UDX12::Util {
 		std::string_view source,
 		const D3D_SHADER_MACRO* defines,
 		const std::string& entrypoint,
-		const std::string& target
+		const std::string& target,
+        D3DInclude* pInclude
 	);
 }

@@ -43,8 +43,8 @@ D3D12_DEPTH_STENCIL_VIEW_DESC UDX12::Desc::DSV::Basic(DXGI_FORMAT format) {
 D3D12_GRAPHICS_PIPELINE_STATE_DESC UDX12::Desc::PSO::Basic(
     ID3D12RootSignature* rootSig,
     D3D12_INPUT_ELEMENT_DESC* pInputElementDescs, UINT NumElements,
-    ID3DBlob* VS,
-    ID3DBlob* PS,
+	const ID3DBlob* VS,
+	const ID3DBlob* PS,
     DXGI_FORMAT rtvFormat,
     DXGI_FORMAT dsvFormat)
 {
@@ -59,8 +59,8 @@ D3D12_GRAPHICS_PIPELINE_STATE_DESC UDX12::Desc::PSO::Basic(
 D3D12_GRAPHICS_PIPELINE_STATE_DESC UDX12::Desc::PSO::MRT(
 	ID3D12RootSignature* rootSig,
 	D3D12_INPUT_ELEMENT_DESC* pInputElementDescs, UINT NumElements,
-	ID3DBlob* VS,
-	ID3DBlob* PS,
+	const ID3DBlob* VS,
+	const ID3DBlob* PS,
 	UINT rtNum,
 	DXGI_FORMAT rtvFormat,
 	DXGI_FORMAT dsvFormat)
@@ -68,11 +68,10 @@ D3D12_GRAPHICS_PIPELINE_STATE_DESC UDX12::Desc::PSO::MRT(
 	D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc;
 
 	ZeroMemory(&psoDesc, sizeof(D3D12_GRAPHICS_PIPELINE_STATE_DESC));
-
 	psoDesc.InputLayout = { pInputElementDescs, NumElements };
 	psoDesc.pRootSignature = rootSig;
-	psoDesc.VS = { reinterpret_cast<BYTE*>(VS->GetBufferPointer()), VS->GetBufferSize() };
-	psoDesc.PS = { reinterpret_cast<BYTE*>(PS->GetBufferPointer()), PS->GetBufferSize() };
+	psoDesc.VS = { const_cast<ID3DBlob*>(VS)->GetBufferPointer(), const_cast<ID3DBlob*>(VS)->GetBufferSize() };
+	psoDesc.PS = { const_cast<ID3DBlob*>(PS)->GetBufferPointer(), const_cast<ID3DBlob*>(PS)->GetBufferSize() };
 	psoDesc.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
 	psoDesc.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT);
 	psoDesc.DepthStencilState = CD3DX12_DEPTH_STENCIL_DESC(D3D12_DEFAULT);

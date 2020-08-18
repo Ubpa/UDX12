@@ -7,6 +7,7 @@
 
 #include "Blob.h"
 #include "CmdQueue.h"
+#include "D3DInclude.h"
 #include "Desc.h"
 #include "DescriptorHeapMngr.h"
 #include "Device.h"
