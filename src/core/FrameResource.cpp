@@ -1,14 +1,14 @@
-#include <UDX12/FrameRsrcMngr.h>
+#include <UDX12/FrameResource.h>
 
 using namespace Ubpa;
 
-void UDX12::FrameRsrcMngr::Signal(ID3D12CommandQueue* cmdQueue, UINT64 cpuFence) {
+void UDX12::FrameResource::Signal(ID3D12CommandQueue* cmdQueue, UINT64 cpuFence) {
 	this->cpuFence = cpuFence;
 	cmdQueue->Signal(gpuFence, cpuFence);
 }
 
-void UDX12::FrameRsrcMngr::Wait() {
-    if (cpuFence == 0 || gpuFence->GetCompletedValue() >= cpuFence)
+void UDX12::FrameResource::Wait() {
+    if (gpuFence->GetCompletedValue() >= cpuFence)
         return;
 
     HANDLE eventHandle = CreateEventEx(nullptr, nullptr, false, EVENT_ALL_ACCESS);
@@ -25,7 +25,7 @@ void UDX12::FrameRsrcMngr::Wait() {
     delayUpdatorMap.clear();
 }
 
-UDX12::FrameRsrcMngr& UDX12::FrameRsrcMngr::UnregisterResource(std::string_view name) {
+UDX12::FrameResource& UDX12::FrameResource::UnregisterResource(std::string_view name) {
     assert(HaveResource(name));
 
     resourceMap.erase(resourceMap.find(name));
@@ -33,7 +33,7 @@ UDX12::FrameRsrcMngr& UDX12::FrameRsrcMngr::UnregisterResource(std::string_view 
     return *this;
 }
 
-UDX12::FrameRsrcMngr& UDX12::FrameRsrcMngr::DelayUnregisterResource(std::string name) {
+UDX12::FrameResource& UDX12::FrameResource::DelayUnregisterResource(std::string name) {
     assert(HaveResource(name));
     delayUnregisterResources.emplace_back(std::move(name));
     return *this;

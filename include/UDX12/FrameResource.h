@@ -8,9 +8,27 @@
 
 namespace Ubpa::UDX12 {
 	// frame resource mngr
-	class FrameRsrcMngr {
+	class FrameResource {
 	public:
-		FrameRsrcMngr(UINT64 cpuFence, ID3D12Fence* gpuFence) : cpuFence{ cpuFence }, gpuFence { gpuFence } {}
+		FrameResource(UINT64 cpuFence, ID3D12Fence* gpuFence) : cpuFence{ cpuFence }, gpuFence{ gpuFence } {}
+
+		bool HaveResource(std::string_view name) const { return resourceMap.find(name) != resourceMap.end(); }
+
+		template<typename T>
+		FrameResource& RegisterResource(std::string name, T&& resource);
+
+		FrameResource& UnregisterResource(std::string_view name);
+		FrameResource& DelayUnregisterResource(std::string name);
+		template<typename Func>
+		FrameResource& DelayUpdateResource(std::string name, Func&& updator);
+
+		template<typename T>
+		T& GetResource(std::string_view name);
+		template<typename T>
+		const T& GetResource(std::string_view name) const;
+
+	private:
+		friend class FrameResourceMngr;
 
 		// cpu at frame [cpuFence] use the resources
 		// when the frame complete (GPU instructions complete), gpuFence <- cpuFence
@@ -21,22 +39,6 @@ namespace Ubpa::UDX12 {
 		// run delay updator and unregister
 		void Wait();
 
-		bool HaveResource(std::string_view name) const { return resourceMap.find(name) != resourceMap.end(); }
-
-		template<typename T>
-		FrameRsrcMngr& RegisterResource(std::string name, T&& resource);
-
-		FrameRsrcMngr& UnregisterResource(std::string_view name);
-		FrameRsrcMngr& DelayUnregisterResource(std::string name);
-		template<typename Func>
-		FrameRsrcMngr& DelayUpdateResource(std::string name, Func&& updator);
-
-		template<typename T>
-		T& GetResource(std::string_view name);
-		template<typename T>
-		const T& GetResource(std::string_view name) const;
-
-	private:
 		ID3D12Fence* gpuFence;
 		UINT64 cpuFence;
 		std::map<std::string, std::any, std::less<>> resourceMap;
