@@ -6,18 +6,32 @@ using namespace Ubpa::UDX12::FG;
 using namespace Ubpa::UDX12;
 using namespace Ubpa;
 
-void Executor::Execute(const UFG::Compiler::Result& crst, RsrcMngr& rsrcMngr)
-{
+void Executor::Execute(
+	ID3D12Device* device,
+	ID3D12CommandQueue* cmdQueue,
+	ID3D12CommandAllocator* alloc,
+	const UFG::Compiler::Result& crst,
+	RsrcMngr& rsrcMngr
+) {
 	rsrcMngr.DHReserve();
 	rsrcMngr.AllocateHandle();
+
+	ComPtr<ID3D12GraphicsCommandList> cmdList;
+
+	ThrowIfFailed(device->CreateCommandList(
+		0,
+		D3D12_COMMAND_LIST_TYPE_DIRECT,
+		alloc,                     // Associated command allocator
+		nullptr,                   // Initial PipelineStateObject
+		IID_PPV_ARGS(cmdList.GetAddressOf())));
 
 	auto target = crst.idx2info.find(static_cast<size_t>(-1));
 	if (target != crst.idx2info.end()) {
 		const auto& passinfo = target->second;
 		for (const auto& rsrc : passinfo.constructRsrcs)
-			rsrcMngr.Construct(rsrc);
+			rsrcMngr.Construct(device, rsrc);
 		for (const auto& rsrc : passinfo.destructRsrcs)
-			rsrcMngr.Destruct(rsrc);
+			rsrcMngr.Destruct(cmdList.Get(), rsrc);
 		for (const auto& rsrc : passinfo.moveRsrcs) {
 			auto dst = crst.moves_src2dst.find(rsrc)->second;
 			rsrcMngr.Move(dst, rsrc);
@@ -28,17 +42,21 @@ void Executor::Execute(const UFG::Compiler::Result& crst, RsrcMngr& rsrcMngr)
 		const auto& passinfo = crst.idx2info.find(passNodeIdx)->second;
 
 		for (const auto& rsrc : passinfo.constructRsrcs)
-			rsrcMngr.Construct(rsrc);
+			rsrcMngr.Construct(device, rsrc);
 
-		auto passRsrcs = rsrcMngr.RequestPassRsrcs(passNodeIdx);
-		passFuncs[passNodeIdx](passRsrcs);
+		auto passRsrcs = rsrcMngr.RequestPassRsrcs(device, cmdList.Get(), passNodeIdx);
+		passFuncs.find(passNodeIdx)->second(cmdList.Get(), passRsrcs);
 
 		for (const auto& rsrc : passinfo.destructRsrcs)
-			rsrcMngr.Destruct(rsrc);
+			rsrcMngr.Destruct(cmdList.Get(), rsrc);
 
 		for (const auto& rsrc : passinfo.moveRsrcs) {
 			auto dst = crst.moves_src2dst.find(rsrc)->second;
 			rsrcMngr.Move(dst, rsrc);
 		}
 	}
+
+	cmdList->Close();
+	std::array<ID3D12CommandList*, 1> cmdListArray = { cmdList.Get() };
+	cmdQueue->ExecuteCommandLists(cmdListArray.size(), cmdListArray.data());
 }

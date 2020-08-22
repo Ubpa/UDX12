@@ -11,7 +11,9 @@ namespace Ubpa::UDX12::FG {
 
 	class Executor {
 	public:
-		Executor& RegisterPassFunc(size_t passNodeIdx, std::function<void(const PassRsrcs&)> func) {
+		using PassFunction = std::function<void(ID3D12GraphicsCommandList*, const PassRsrcs&)>;
+
+		Executor& RegisterPassFunc(size_t passNodeIdx, PassFunction func) {
 			passFuncs[passNodeIdx] = std::move(func);
 			return *this;
 		}
@@ -20,9 +22,16 @@ namespace Ubpa::UDX12::FG {
 			passFuncs.clear();
 		}
 
-		void Execute(const UFG::Compiler::Result& crst, RsrcMngr& rsrcMngr);
+		// TODO: parallel
+		void Execute(
+			ID3D12Device* device,
+			ID3D12CommandQueue* cmdQueue,
+			ID3D12CommandAllocator* alloc,
+			const UFG::Compiler::Result& crst,
+			RsrcMngr& rsrcMngr
+		);
 
 	private:
-		std::unordered_map<size_t, std::function<void(const PassRsrcs&)>> passFuncs;
+		std::unordered_map<size_t, PassFunction> passFuncs;
 	};
 }

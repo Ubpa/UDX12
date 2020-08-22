@@ -9,6 +9,13 @@ using namespace std;
 
 #include <DirectXColors.h>
 
+RsrcMngr::RsrcMngr() {
+	csuDynamicDH = new DynamicSuballocMngr{
+		*DescriptorHeapMngr::Instance().GetCSUGpuDH(),
+		256,
+		"RsrcMngr::csuDynamicDH" };
+}
+
 RsrcMngr::~RsrcMngr() {
 	if (!csuDH.IsNull())
 		DescriptorHeapMngr::Instance().GetCSUGpuDH()->Free(move(csuDH));
@@ -18,15 +25,6 @@ RsrcMngr::~RsrcMngr() {
 		DescriptorHeapMngr::Instance().GetDSVCpuDH()->Free(move(dsvDH));
 	csuDynamicDH->ReleaseAllocations();
 	delete csuDynamicDH;
-}
-
-void RsrcMngr::Init(GCmdList uGCmdList, Device uDevice) {
-	this->uGCmdList = uGCmdList;
-	this->uDevice = uDevice;
-	csuDynamicDH = new DynamicSuballocMngr{
-		*DescriptorHeapMngr::Instance().GetCSUGpuDH(),
-		256,
-		"RsrcMngr::csuDynamicDH" };
 }
 
 void RsrcMngr::NewFrame() {
@@ -200,7 +198,7 @@ void RsrcMngr::DHReserve() {
 	DsvDHReserve(numDSV);
 }
 
-void RsrcMngr::Construct(size_t rsrcNodeIdx) {
+void RsrcMngr::Construct(ID3D12Device* device, size_t rsrcNodeIdx) {
 	SRsrcView view;
 
 	if (IsImported(rsrcNodeIdx))
@@ -211,7 +209,7 @@ void RsrcMngr::Construct(size_t rsrcNodeIdx) {
 		if (typefrees.empty()) {
 			view.state = D3D12_RESOURCE_STATE_COMMON;
 			RsrcPtr ptr;
-			ThrowIfFailed(uDevice->CreateCommittedResource(
+			ThrowIfFailed(device->CreateCommittedResource(
 				&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT),
 				D3D12_HEAP_FLAG_NONE,
 				&type.desc,
@@ -229,17 +227,20 @@ void RsrcMngr::Construct(size_t rsrcNodeIdx) {
 	actives[rsrcNodeIdx] = view;
 }
 
-void RsrcMngr::Destruct(size_t rsrcNodeIdx) {
+void RsrcMngr::Destruct(ID3D12GraphicsCommandList* cmdList, size_t rsrcNodeIdx) {
 	auto view = actives[rsrcNodeIdx];
 	if (!IsImported(rsrcNodeIdx))
 		pool[temporals[rsrcNodeIdx]].push_back(view);
 	else {
 		auto orig_state = importeds[rsrcNodeIdx].state;
 		if (view.state != orig_state) {
-			uGCmdList.ResourceBarrierTransition(
-				view.pRsrc,
-				view.state,
-				orig_state);
+			cmdList->ResourceBarrier(
+				1,
+				&CD3DX12_RESOURCE_BARRIER::Transition(
+					view.pRsrc,
+					view.state, orig_state
+				)
+			);
 		}
 	}
 	actives.erase(rsrcNodeIdx);
@@ -247,8 +248,16 @@ void RsrcMngr::Destruct(size_t rsrcNodeIdx) {
 
 void RsrcMngr::Move(size_t dstRsrcNodeIdx, size_t srcRsrcNodeIdx) {
 	assert(dstRsrcNodeIdx != srcRsrcNodeIdx);
-	actives[dstRsrcNodeIdx] = actives[srcRsrcNodeIdx];
+	assert(actives.find(dstRsrcNodeIdx) == actives.end());
+	assert(actives.find(srcRsrcNodeIdx) != actives.end());
+
+	actives.emplace(dstRsrcNodeIdx, actives[srcRsrcNodeIdx]);
 	actives.erase(srcRsrcNodeIdx);
+
+	if (IsImported(srcRsrcNodeIdx)) {
+		importeds.emplace(dstRsrcNodeIdx, importeds[srcRsrcNodeIdx]);
+		importeds.erase(srcRsrcNodeIdx);
+	}
 }
 
 RsrcMngr& RsrcMngr::RegisterRsrcHandle(
@@ -450,7 +459,7 @@ void RsrcMngr::AllocateHandle() {
 	}
 }
 
-PassRsrcs RsrcMngr::RequestPassRsrcs(size_t passNodeIdx) {
+PassRsrcs RsrcMngr::RequestPassRsrcs(ID3D12Device* device, ID3D12GraphicsCommandList* cmdList, size_t passNodeIdx) {
 	PassRsrcs passRsrc;
 	const auto& rsrcStates = passNodeIdx2rsrcMap[passNodeIdx];
 	for (const auto& [rsrcNodeIdx, state_desc] : rsrcStates) {
@@ -459,10 +468,13 @@ PassRsrcs RsrcMngr::RequestPassRsrcs(size_t passNodeIdx) {
 		auto& handles = handleMap[rsrcNodeIdx];
 
 		if (view.state != state) {
-			uGCmdList.ResourceBarrierTransition(
-				view.pRsrc,
-				view.state,
-				state);
+			cmdList->ResourceBarrier(
+				1,
+				&CD3DX12_RESOURCE_BARRIER::Transition(
+					view.pRsrc,
+					view.state, state
+				)
+			);
 			view.state = state;
 		}
 
@@ -481,7 +493,7 @@ PassRsrcs RsrcMngr::RequestPassRsrcs(size_t passNodeIdx) {
 					D3D12_CONSTANT_BUFFER_VIEW_DESC bindDesc = desc;
 					bindDesc.BufferLocation = view.pRsrc->GetGPUVirtualAddress();
 
-					uDevice->CreateConstantBufferView(&bindDesc, info.cpuHandle);
+					device->CreateConstantBufferView(&bindDesc, info.cpuHandle);
 
 					info.init = true;
 				}
@@ -504,7 +516,7 @@ PassRsrcs RsrcMngr::RequestPassRsrcs(size_t passNodeIdx) {
 					else
 						pdesc = nullptr;
 
-					uDevice->CreateShaderResourceView(view.pRsrc, pdesc, info->cpuHandle);
+					device->CreateShaderResourceView(view.pRsrc, pdesc, info->cpuHandle);
 
 					info->init = true;
 				}
@@ -527,7 +539,7 @@ PassRsrcs RsrcMngr::RequestPassRsrcs(size_t passNodeIdx) {
 					else
 						pdesc = nullptr;
 
-					uDevice->CreateUnorderedAccessView(view.pRsrc, nullptr, pdesc, info->cpuHandle);
+					device->CreateUnorderedAccessView(view.pRsrc, nullptr, pdesc, info->cpuHandle);
 
 					info->init = true;
 				}
@@ -550,7 +562,7 @@ PassRsrcs RsrcMngr::RequestPassRsrcs(size_t passNodeIdx) {
 					else
 						pdesc = nullptr;
 
-					uDevice->CreateRenderTargetView(view.pRsrc, pdesc, info->cpuHandle);
+					device->CreateRenderTargetView(view.pRsrc, pdesc, info->cpuHandle);
 
 					info->init = true;
 				}
@@ -573,7 +585,7 @@ PassRsrcs RsrcMngr::RequestPassRsrcs(size_t passNodeIdx) {
 					else
 						pdesc = nullptr;
 
-					uDevice->CreateDepthStencilView(view.pRsrc, pdesc, info->cpuHandle);
+					device->CreateDepthStencilView(view.pRsrc, pdesc, info->cpuHandle);
 
 					info->init = true;
 				}
