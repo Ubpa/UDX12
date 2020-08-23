@@ -2,6 +2,9 @@
 
 #include "Util.h"
 
+#include "ResourceDeleteBatch.h"
+#include "_deps/DirectXTK12/ResourceUploadBatch.h"
+
 #include <memory>
 
 namespace Ubpa::UDX12 {
@@ -19,7 +22,42 @@ namespace Ubpa::UDX12 {
 
 		void Set(UINT64 offset, const void* data, UINT64 size);
 
+		void CopyConstruct(
+			size_t dstOffset, size_t srcOffset, size_t numBytes,
+			ID3D12Device* device,
+			ID3D12GraphicsCommandList* cmdList,
+			D3D12_RESOURCE_STATES afterState,
+			ID3D12Resource** pBuffer, // out com ptr
+			D3D12_RESOURCE_FLAGS resFlags = D3D12_RESOURCE_FLAG_NONE
+		);
+
+		void MoveConstruct(
+			size_t dstOffset, size_t srcOffset, size_t numBytes,
+			ResourceDeleteBatch& deleteBatch,
+			ID3D12Device* device,
+			ID3D12GraphicsCommandList* cmdList,
+			D3D12_RESOURCE_STATES afterState,
+			ID3D12Resource** pBuffer, // out com ptr
+			D3D12_RESOURCE_FLAGS resFlags = D3D12_RESOURCE_FLAG_NONE
+		);
+
+		void CopyAssign(
+			size_t dstOffset, size_t srcOffset, size_t numBytes,
+			ID3D12GraphicsCommandList* cmdList,
+			ID3D12Resource* dst,
+			D3D12_RESOURCE_STATES state = D3D12_RESOURCE_STATE_GENERIC_READ
+		);
+
+		void MoveAssign(
+			size_t dstOffset, size_t srcOffset, size_t numBytes,
+			ResourceDeleteBatch& deleteBatch,
+			ID3D12GraphicsCommandList* cmdList,
+			ID3D12Resource* dst,
+			D3D12_RESOURCE_STATES state = D3D12_RESOURCE_STATE_GENERIC_READ
+		);
 	private:
+		void Delete(ResourceDeleteBatch& deleteBatch);
+
 		ComPtr<ID3D12Resource> resource;
 		BYTE* mappedData;
 		UINT64 size;
@@ -37,6 +75,40 @@ namespace Ubpa::UDX12 {
 		// not retain original data when resizing
 		void FastReserve(size_t size);
 		void Set(UINT64 offset, const void* data, UINT64 size);
+
+		void CopyConstruct(
+			size_t dstOffset, size_t srcOffset, size_t numBytes,
+			ID3D12Device* device,
+			ID3D12GraphicsCommandList* cmdList,
+			D3D12_RESOURCE_STATES afterState,
+			ID3D12Resource** pBuffer, // out com ptr
+			D3D12_RESOURCE_FLAGS resFlags = D3D12_RESOURCE_FLAG_NONE
+		);
+
+		void MoveConstruct(
+			size_t dstOffset, size_t srcOffset, size_t numBytes,
+			ResourceDeleteBatch& deleteBatch,
+			ID3D12Device* device,
+			ID3D12GraphicsCommandList* cmdList,
+			D3D12_RESOURCE_STATES afterState,
+			ID3D12Resource** pBuffer, // out com ptr
+			D3D12_RESOURCE_FLAGS resFlags = D3D12_RESOURCE_FLAG_NONE
+		);
+
+		void CopyAssign(
+			size_t dstOffset, size_t srcOffset, size_t numBytes,
+			ID3D12GraphicsCommandList* cmdList,
+			ID3D12Resource* dst,
+			D3D12_RESOURCE_STATES state = D3D12_RESOURCE_STATE_GENERIC_READ
+		);
+
+		void MoveAssign(
+			size_t dstOffset, size_t srcOffset, size_t numBytes,
+			ResourceDeleteBatch& deleteBatch,
+			ID3D12GraphicsCommandList* cmdList,
+			ID3D12Resource* dst,
+			D3D12_RESOURCE_STATES state = D3D12_RESOURCE_STATE_GENERIC_READ
+		);
 	private:
 		ID3D12Device* device;
 		D3D12_RESOURCE_FLAGS flag;
