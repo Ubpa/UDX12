@@ -42,7 +42,7 @@ D3D12_DEPTH_STENCIL_VIEW_DESC UDX12::Desc::DSV::Basic(DXGI_FORMAT format) {
 
 D3D12_GRAPHICS_PIPELINE_STATE_DESC UDX12::Desc::PSO::Basic(
     ID3D12RootSignature* rootSig,
-    D3D12_INPUT_ELEMENT_DESC* pInputElementDescs, UINT NumElements,
+	const D3D12_INPUT_ELEMENT_DESC* pInputElementDescs, UINT NumElements,
 	const ID3DBlob* VS,
 	const ID3DBlob* PS,
     DXGI_FORMAT rtvFormat,
@@ -58,7 +58,7 @@ D3D12_GRAPHICS_PIPELINE_STATE_DESC UDX12::Desc::PSO::Basic(
 
 D3D12_GRAPHICS_PIPELINE_STATE_DESC UDX12::Desc::PSO::MRT(
 	ID3D12RootSignature* rootSig,
-	D3D12_INPUT_ELEMENT_DESC* pInputElementDescs, UINT NumElements,
+	const D3D12_INPUT_ELEMENT_DESC* pInputElementDescs, UINT NumElements,
 	const ID3DBlob* VS,
 	const ID3DBlob* PS,
 	UINT rtNum,

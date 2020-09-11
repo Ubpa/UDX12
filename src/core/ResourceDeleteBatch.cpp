@@ -5,6 +5,9 @@
 using namespace Ubpa;
 
 std::future<void> UDX12::ResourceDeleteBatch::Commit(ID3D12Device* device, ID3D12CommandQueue* cmdQueue) {
+	if (resources.empty())
+		return {};
+
 	// Set an event so we get notified when the GPU has completed all its work
 	ComPtr<ID3D12Fence> fence;
 	ThrowIfFailed(device->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_GRAPHICS_PPV_ARGS(fence.GetAddressOf())));

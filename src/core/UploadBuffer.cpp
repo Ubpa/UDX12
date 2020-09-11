@@ -86,6 +86,7 @@ void UDX12::UploadBuffer::CopyAssign(
 ) {
     assert(resource);
 	assert(dst->GetDesc().Dimension == D3D12_RESOURCE_DIMENSION_BUFFER);
+	assert(dstOffset + numBytes <= dst->GetDesc().Width);
 
 	DirectX::TransitionResource(cmdList, dst, state, D3D12_RESOURCE_STATE_COPY_DEST);
 	cmdList->CopyBufferRegion(dst, dstOffset, resource.Get(), srcOffset, size);
@@ -107,8 +108,8 @@ void UDX12::UploadBuffer::MoveAssign(
 	Delete(deleteBatch);
 }
 
-
 void UDX12::UploadBuffer::Delete(ResourceDeleteBatch& deleteBatch) {
+	assert(resource);
 	resource->Unmap(0, nullptr);
 
 	deleteBatch.Add(resource.Get());

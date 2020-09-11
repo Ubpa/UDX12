@@ -26,6 +26,13 @@ namespace Ubpa::UDX12 {
 }
 
 namespace Ubpa::UDX12::Util {
+    template<typename T>
+    void ReleaseCom(T* & p) {
+        if (p) {
+            p->Release();
+            p = nullptr;
+        }
+    }
 
     std::wstring AnsiToWString(const std::string& str);
 
@@ -36,6 +43,7 @@ namespace Ubpa::UDX12::Util {
         T* operator->() noexcept { return raw.Get(); }
         const T* operator->() const noexcept { return raw.Get(); }
         bool IsNull() const noexcept { return raw.Get() == nullptr; }
+        T* Get() const noexcept { return raw.Get(); }
     };
 
     class Exception {

@@ -15,7 +15,7 @@ namespace Ubpa::UDX12::Desc {
 	namespace PSO {
 		D3D12_GRAPHICS_PIPELINE_STATE_DESC Basic(
 			ID3D12RootSignature* rootSig,
-			D3D12_INPUT_ELEMENT_DESC* pInputElementDescs, UINT NumElements,
+			const D3D12_INPUT_ELEMENT_DESC* pInputElementDescs, UINT NumElements,
             const ID3DBlob* VS,
             const ID3DBlob* PS,
 			DXGI_FORMAT rtvFormat,
@@ -23,7 +23,7 @@ namespace Ubpa::UDX12::Desc {
 
         D3D12_GRAPHICS_PIPELINE_STATE_DESC MRT(
             ID3D12RootSignature* rootSig,
-            D3D12_INPUT_ELEMENT_DESC* pInputElementDescs, UINT NumElements,
+            const D3D12_INPUT_ELEMENT_DESC* pInputElementDescs, UINT NumElements,
             const ID3DBlob* VS,
             const ID3DBlob* PS,
             UINT rtNum,
