@@ -63,6 +63,27 @@ namespace Ubpa::UDX12::FG::detail {
 	}
 }
 
+
+inline bool operator==(const D3D12_CONSTANT_BUFFER_VIEW_DESC& lhs, const D3D12_CONSTANT_BUFFER_VIEW_DESC& rhs) noexcept {
+	return Ubpa::UDX12::FG::detail::bitwise_equal(lhs, rhs);
+}
+
+inline bool operator==(const D3D12_SHADER_RESOURCE_VIEW_DESC& lhs, const D3D12_SHADER_RESOURCE_VIEW_DESC& rhs) noexcept {
+	return Ubpa::UDX12::FG::detail::bitwise_equal(lhs, rhs);
+}
+
+inline bool operator==(const D3D12_UNORDERED_ACCESS_VIEW_DESC& lhs, const D3D12_UNORDERED_ACCESS_VIEW_DESC& rhs) noexcept {
+	return Ubpa::UDX12::FG::detail::bitwise_equal(lhs, rhs);
+}
+
+inline bool operator==(const D3D12_RENDER_TARGET_VIEW_DESC& lhs, const D3D12_RENDER_TARGET_VIEW_DESC& rhs) noexcept {
+	return Ubpa::UDX12::FG::detail::bitwise_equal(lhs, rhs);
+}
+
+inline bool operator==(const D3D12_DEPTH_STENCIL_VIEW_DESC& lhs, const D3D12_DEPTH_STENCIL_VIEW_DESC& rhs) noexcept {
+	return Ubpa::UDX12::FG::detail::bitwise_equal(lhs, rhs);
+}
+
 namespace Ubpa::UDX12::FG {
 	using Rsrc = ID3D12Resource;
 	using RsrcPtr = ComPtr<Rsrc>;
@@ -92,36 +113,10 @@ namespace Ubpa::UDX12::FG {
 		RsrcImplDesc_UAV_NULL,
 		RsrcImplDesc_RTV_Null,
 		RsrcImplDesc_DSV_Null>;
-	struct RsrcImpl {
-		ID3D12Resource* resource;
-		D3D12_CPU_DESCRIPTOR_HANDLE cpuHandle;
-		D3D12_GPU_DESCRIPTOR_HANDLE gpuHandle;
-	};
-	using PassRsrcs = std::unordered_map<size_t, RsrcImpl>;
 	struct SRsrcView {
 		Rsrc* pRsrc;
 		RsrcState state;
 	};
-}
-
-inline bool operator==(const D3D12_CONSTANT_BUFFER_VIEW_DESC& lhs, const D3D12_CONSTANT_BUFFER_VIEW_DESC& rhs) noexcept {
-	return Ubpa::UDX12::FG::detail::bitwise_equal(lhs, rhs);
-}
-
-inline bool operator==(const D3D12_SHADER_RESOURCE_VIEW_DESC& lhs, const D3D12_SHADER_RESOURCE_VIEW_DESC& rhs) noexcept {
-	return Ubpa::UDX12::FG::detail::bitwise_equal(lhs, rhs);
-}
-
-inline bool operator==(const D3D12_UNORDERED_ACCESS_VIEW_DESC& lhs, const D3D12_UNORDERED_ACCESS_VIEW_DESC& rhs) noexcept {
-	return Ubpa::UDX12::FG::detail::bitwise_equal(lhs, rhs);
-}
-
-inline bool operator==(const D3D12_RENDER_TARGET_VIEW_DESC& lhs, const D3D12_RENDER_TARGET_VIEW_DESC& rhs) noexcept {
-	return Ubpa::UDX12::FG::detail::bitwise_equal(lhs, rhs);
-}
-
-inline bool operator==(const D3D12_DEPTH_STENCIL_VIEW_DESC& lhs, const D3D12_DEPTH_STENCIL_VIEW_DESC& rhs) noexcept {
-	return Ubpa::UDX12::FG::detail::bitwise_equal(lhs, rhs);
 }
 
 namespace std {
@@ -166,4 +161,42 @@ namespace std {
 			return Ubpa::UDX12::FG::detail::hash_of(desc);
 		}
 	};
+}
+
+namespace Ubpa::UDX12::FG {
+	struct RsrcTypeInfo {
+		struct CpuGpuInfo {
+			D3D12_CPU_DESCRIPTOR_HANDLE cpuHandle{ 0 };
+			D3D12_GPU_DESCRIPTOR_HANDLE gpuHandle{ 0 };
+			bool init{ false };
+		};
+
+		struct CpuInfo {
+			D3D12_CPU_DESCRIPTOR_HANDLE cpuHandle{ 0 };
+			bool init{ false };
+		};
+
+		std::unordered_map<D3D12_CONSTANT_BUFFER_VIEW_DESC, CpuGpuInfo>  desc2info_cbv;
+		std::unordered_map<D3D12_SHADER_RESOURCE_VIEW_DESC, CpuGpuInfo>  desc2info_srv;
+		std::unordered_map<D3D12_UNORDERED_ACCESS_VIEW_DESC, CpuGpuInfo> desc2info_uav;
+
+		std::unordered_map<D3D12_RENDER_TARGET_VIEW_DESC, CpuInfo>       desc2info_rtv;
+		std::unordered_map<D3D12_DEPTH_STENCIL_VIEW_DESC, CpuInfo>       desc2info_dsv;
+
+		CpuGpuInfo null_info_srv;
+		CpuGpuInfo null_info_uav;
+
+		CpuInfo    null_info_dsv;
+		CpuInfo    null_info_rtv;
+
+		bool HaveNullSrv() const { return null_info_srv.cpuHandle.ptr != 0; }
+		bool HaveNullUav() const { return null_info_uav.cpuHandle.ptr != 0; }
+		bool HaveNullDsv() const { return null_info_dsv.cpuHandle.ptr != 0; }
+		bool HaveNullRtv() const { return null_info_rtv.cpuHandle.ptr != 0; }
+	};
+	struct RsrcImpl {
+		ID3D12Resource* resource;
+		const RsrcTypeInfo& info;
+	};
+	using PassRsrcs = std::unordered_map<size_t, RsrcImpl>;
 }

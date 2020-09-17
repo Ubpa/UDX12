@@ -1,8 +1,9 @@
 #include <UDX12/Desc.h>
+#include <d3d12.h>
 
 using namespace Ubpa;
 
-D3D12_SHADER_RESOURCE_VIEW_DESC UDX12::Desc::SRV::Tex2D(DXGI_FORMAT format) {
+D3D12_SHADER_RESOURCE_VIEW_DESC UDX12::Desc::SRV::Tex2D(DXGI_FORMAT format, UINT MipLevels) {
 	D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc;
 	ZeroMemory(&srvDesc, sizeof(D3D12_SHADER_RESOURCE_VIEW_DESC));
     srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
@@ -10,20 +11,20 @@ D3D12_SHADER_RESOURCE_VIEW_DESC UDX12::Desc::SRV::Tex2D(DXGI_FORMAT format) {
     srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
     srvDesc.Texture2D.MostDetailedMip = 0;
 	srvDesc.Texture2D.PlaneSlice = 0;
-    srvDesc.Texture2D.MipLevels = 1;
+    srvDesc.Texture2D.MipLevels = MipLevels;
     srvDesc.Texture2D.ResourceMinLODClamp = 0.0f;
     return srvDesc;
 }
 
-D3D12_SHADER_RESOURCE_VIEW_DESC UDX12::Desc::SRV::TexCube(DXGI_FORMAT format) {
+D3D12_SHADER_RESOURCE_VIEW_DESC UDX12::Desc::SRV::TexCube(DXGI_FORMAT format, UINT MipLevels) {
 	D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc;
 	ZeroMemory(&srvDesc, sizeof(D3D12_SHADER_RESOURCE_VIEW_DESC));
-	srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
-	srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURECUBE;
-	srvDesc.TextureCube.MostDetailedMip = 0;
-	srvDesc.TextureCube.MipLevels = 1;
-	srvDesc.TextureCube.ResourceMinLODClamp = 0.0f;
 	srvDesc.Format = format;
+	srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURECUBE;
+	srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+	srvDesc.TextureCube.MostDetailedMip = 0;
+	srvDesc.TextureCube.MipLevels = MipLevels;
+	srvDesc.TextureCube.ResourceMinLODClamp = 0.0f;
 	return srvDesc;
 }
 
@@ -54,6 +55,24 @@ D3D12_GRAPHICS_PIPELINE_STATE_DESC UDX12::Desc::PSO::Basic(
 		1,
 		rtvFormat,
 		dsvFormat);
+}
+
+D3D12_RENDER_TARGET_VIEW_DESC UDX12::Desc::RTV::Tex2DofTexCube(
+	DXGI_FORMAT format,
+	UINT Index,
+	UINT MipSlice
+) {
+	D3D12_RENDER_TARGET_VIEW_DESC desc;
+	ZeroMemory(&desc, sizeof(D3D12_RENDER_TARGET_VIEW_DESC));
+
+	desc.Format = format;
+	desc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2DARRAY;
+	desc.Texture2DArray.ArraySize = 1;
+	desc.Texture2DArray.FirstArraySlice = Index;
+	desc.Texture2DArray.MipSlice = MipSlice;
+	desc.Texture2DArray.PlaneSlice = 0;
+
+	return desc;
 }
 
 D3D12_GRAPHICS_PIPELINE_STATE_DESC UDX12::Desc::PSO::MRT(
@@ -118,4 +137,29 @@ D3D12_RESOURCE_DESC UDX12::Desc::RSRC::RT2D(
 	DXGI_FORMAT format)
 {
 	return Basic(D3D12_RESOURCE_DIMENSION_TEXTURE2D, Width, Height, format, D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET);
+}
+
+D3D12_RESOURCE_DESC UDX12::Desc::RSRC::TextureCube(
+	UINT64 Width,
+	UINT Height,
+	UINT MipLevels,
+	DXGI_FORMAT format,
+	D3D12_RESOURCE_FLAGS flags
+) {
+	D3D12_RESOURCE_DESC desc;
+	ZeroMemory(&desc, sizeof(D3D12_RESOURCE_DESC));
+
+	desc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
+	desc.Alignment = 0;
+	desc.Width = Width;
+	desc.Height = Height;
+	desc.DepthOrArraySize = 6;
+	desc.MipLevels = MipLevels;
+	desc.Format = format;
+	desc.SampleDesc.Count = 1;
+	desc.SampleDesc.Quality = 0;
+	desc.Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN;
+	desc.Flags = flags;
+
+	return desc;
 }

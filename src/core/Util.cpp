@@ -1,5 +1,7 @@
 #include <UDX12/Util.h>
 
+#include <UDX12/_deps/DirectXTK12/DirectXTK12.h>
+
 #include <UDX12/D3DInclude.h>
 
 #include <comdef.h>
@@ -172,4 +174,96 @@ ComPtr<ID3DBlob> Util::CompileShader(
 	ThrowIfFailed(hr);
 
 	return byteCode;
+}
+
+namespace Ubpa::UDX12::detail {
+	inline uint32_t CountMips(uint32_t width, uint32_t height) noexcept
+	{
+		if (width == 0 || height == 0)
+			return 0;
+
+		uint32_t count = 1;
+		while (width > 1 || height > 1)
+		{
+			width >>= 1;
+			height >>= 1;
+			count++;
+		}
+		return count;
+	}
+}
+
+_Use_decl_annotations_
+HRESULT Util::CreateTexture2DArrayFromMemory(ID3D12Device* device,
+    DirectX::ResourceUploadBatch& resourceUpload,
+    size_t width, size_t height, size_t arraySize,
+    DXGI_FORMAT format,
+    const D3D12_SUBRESOURCE_DATA* subResources,
+    ID3D12Resource** texture,
+    bool generateMips,
+    D3D12_RESOURCE_STATES afterState,
+    D3D12_RESOURCE_FLAGS resFlags) noexcept
+{
+	if (!texture)
+		return E_INVALIDARG;
+
+	*texture = nullptr;
+
+	if (!device || !width || !height || !arraySize)
+		return E_INVALIDARG;
+
+	static_assert(D3D12_REQ_TEXTURE3D_U_V_OR_W_DIMENSION <= UINT16_MAX, "Exceeded integer limits");
+
+	if ((width > D3D12_REQ_TEXTURE3D_U_V_OR_W_DIMENSION)
+		|| (height > D3D12_REQ_TEXTURE3D_U_V_OR_W_DIMENSION)
+		|| (arraySize > D3D12_REQ_TEXTURE3D_U_V_OR_W_DIMENSION))
+	{
+		//DebugTrace("ERROR: Resource dimensions too large for DirectX 12 (3D: size %zu by %zu by %zu)\n", width, height, arraySize);
+		return HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED);
+	}
+
+	uint16_t mipCount = 1;
+	if (generateMips)
+	{
+		generateMips = resourceUpload.IsSupportedForGenerateMips(format);
+		if (generateMips)
+		{
+			mipCount = static_cast<uint16_t>(detail::CountMips(static_cast<uint32_t>(width), static_cast<uint32_t>(height)));
+		}
+	}
+
+	auto desc = CD3DX12_RESOURCE_DESC::Tex2D(format, static_cast<UINT64>(width), static_cast<UINT>(height),
+        static_cast<UINT16>(arraySize), mipCount, 1u, 0u, resFlags);
+
+	CD3DX12_HEAP_PROPERTIES heapProperties(D3D12_HEAP_TYPE_DEFAULT);
+
+	ComPtr<ID3D12Resource> res;
+	HRESULT hr = device->CreateCommittedResource(
+		&heapProperties,
+		D3D12_HEAP_FLAG_NONE,
+		&desc,
+		D3D12_RESOURCE_STATE_COPY_DEST,
+		nullptr,
+		IID_GRAPHICS_PPV_ARGS(res.GetAddressOf()));
+	if (FAILED(hr))
+		return hr;
+
+	try
+	{
+		resourceUpload.Upload(res.Get(), 0, subResources, arraySize);
+
+		resourceUpload.Transition(res.Get(), D3D12_RESOURCE_STATE_COPY_DEST, afterState);
+	}
+	/*catch (com_exception e)
+	{
+		return e.get_result();
+	}*/
+	catch (...)
+	{
+		return E_FAIL;
+	}
+
+	*texture = res.Detach();
+
+	return S_OK;
 }
