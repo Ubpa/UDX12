@@ -250,7 +250,7 @@ HRESULT Util::CreateTexture2DArrayFromMemory(ID3D12Device* device,
 
 	try
 	{
-		resourceUpload.Upload(res.Get(), 0, subResources, arraySize);
+		resourceUpload.Upload(res.Get(), 0, subResources, (UINT)arraySize);
 
 		resourceUpload.Transition(res.Get(), D3D12_RESOURCE_STATE_COPY_DEST, afterState);
 	}

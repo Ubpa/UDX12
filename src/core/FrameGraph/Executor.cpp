@@ -58,5 +58,5 @@ void Executor::Execute(
 
 	cmdList->Close();
 	std::array<ID3D12CommandList*, 1> cmdListArray = { cmdList.Get() };
-	cmdQueue->ExecuteCommandLists(cmdListArray.size(), cmdListArray.data());
+	cmdQueue->ExecuteCommandLists((UINT)cmdListArray.size(), cmdListArray.data());
 }
