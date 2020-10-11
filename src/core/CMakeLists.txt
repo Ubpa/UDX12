@@ -14,8 +14,8 @@ Ubpa_AddTarget(
     Ubpa::UFG_core
   LIB_INTERFACE
     d3dcompiler.lib
-	D3D12.lib
-	dxgi.lib
+    D3D12.lib
+    dxgi.lib
     dxguid.lib
   DEFINE
     UNICODE
