@@ -37,7 +37,7 @@ namespace Ubpa::UDX12 {
 		// at the cpu frame beginning, you should wait the frame complete
 		// block cpu
 		// run delay updator and unregister
-		void Wait();
+		void BeginFrame();
 
 		ID3D12Fence* gpuFence;
 		UINT64 cpuFence;

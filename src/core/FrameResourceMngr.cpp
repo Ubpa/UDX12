@@ -15,10 +15,7 @@ UDX12::FrameResource* UDX12::FrameResourceMngr::GetCurrentFrameResource() noexce
 }
 
 void UDX12::FrameResourceMngr::BeginFrame() {
-	if (cpuFence == 0)
-		return;
-	
-	GetCurrentFrameResource()->Wait();
+	GetCurrentFrameResource()->BeginFrame();
 }
 
 void UDX12::FrameResourceMngr::EndFrame(ID3D12CommandQueue* cmdQueue) {
