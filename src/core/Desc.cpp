@@ -16,6 +16,18 @@ D3D12_SHADER_RESOURCE_VIEW_DESC UDX12::Desc::SRV::Tex2D(DXGI_FORMAT format, UINT
     return srvDesc;
 }
 
+D3D12_SHADER_RESOURCE_VIEW_DESC UDX12::Desc::SRV::Tex3D(DXGI_FORMAT format, UINT MipLevels) {
+	D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc;
+	ZeroMemory(&srvDesc, sizeof(D3D12_SHADER_RESOURCE_VIEW_DESC));
+	srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+	srvDesc.Format = format;
+	srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE3D;
+	srvDesc.Texture3D.MipLevels = MipLevels;
+	srvDesc.Texture3D.MostDetailedMip = 0;
+	srvDesc.Texture3D.ResourceMinLODClamp = 0.f;
+	return srvDesc;
+}
+
 D3D12_SHADER_RESOURCE_VIEW_DESC UDX12::Desc::SRV::TexCube(DXGI_FORMAT format, UINT MipLevels) {
 	D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc;
 	ZeroMemory(&srvDesc, sizeof(D3D12_SHADER_RESOURCE_VIEW_DESC));

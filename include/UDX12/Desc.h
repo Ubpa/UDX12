@@ -5,6 +5,7 @@
 namespace Ubpa::UDX12::Desc {
     namespace SRV {
         D3D12_SHADER_RESOURCE_VIEW_DESC Tex2D(DXGI_FORMAT format, UINT MipLevels = 1);
+        D3D12_SHADER_RESOURCE_VIEW_DESC Tex3D(DXGI_FORMAT format, UINT MipLevels = 1);
 		D3D12_SHADER_RESOURCE_VIEW_DESC TexCube(DXGI_FORMAT format, UINT MipLevels = 1);
     }
 
