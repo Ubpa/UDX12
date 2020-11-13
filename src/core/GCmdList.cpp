@@ -1,5 +1,7 @@
 #include <UDX12/GCmdList.h>
 
+#include <UDX12/_deps/DirectXTK12/DirectXHelpers.h>
+
 using namespace Ubpa;
 
 void UDX12::GCmdList::Reset(ID3D12CommandAllocator* pAllocator) {
@@ -7,13 +9,7 @@ void UDX12::GCmdList::Reset(ID3D12CommandAllocator* pAllocator) {
 }
 
 void UDX12::GCmdList::ResourceBarrierTransition(ID3D12Resource* resource, D3D12_RESOURCE_STATES from, D3D12_RESOURCE_STATES to) {
-    raw->ResourceBarrier(
-        1,
-        &CD3DX12_RESOURCE_BARRIER::Transition(
-            resource,
-            from, to
-        )
-    );
+    DirectX::TransitionResource(raw.Get(), resource, from, to);
 }
 
 void UDX12::GCmdList::RSSetViewport(D3D12_VIEWPORT viewport) {

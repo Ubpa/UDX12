@@ -2,6 +2,8 @@
 
 #include <UFG/FrameGraph.h>
 
+#include <UDX12/_deps/DirectXTK12/DirectXHelpers.h>
+
 using namespace Ubpa::UDX12::FG;
 using namespace Ubpa::UDX12;
 using namespace Ubpa;
@@ -212,8 +214,9 @@ void RsrcMngr::Construct(ID3D12Device* device, size_t rsrcNodeIdx) {
 		if (typefrees.empty()) {
 			view.state = D3D12_RESOURCE_STATE_COMMON;
 			RsrcPtr ptr;
+			const auto defaultHeapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
 			ThrowIfFailed(device->CreateCommittedResource(
-				&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT),
+				&defaultHeapProperties,
 				D3D12_HEAP_FLAG_NONE,
 				&type.desc,
 				view.state,
@@ -236,15 +239,8 @@ void RsrcMngr::Destruct(ID3D12GraphicsCommandList* cmdList, size_t rsrcNodeIdx) 
 		pool[temporals.at(rsrcNodeIdx)].push_back(view);
 	else {
 		auto orig_state = importeds.at(rsrcNodeIdx).state;
-		if (view.state != orig_state) {
-			cmdList->ResourceBarrier(
-				1,
-				&CD3DX12_RESOURCE_BARRIER::Transition(
-					view.pRsrc,
-					view.state, orig_state
-				)
-			);
-		}
+		if (view.state != orig_state)
+			DirectX::TransitionResource(cmdList, view.pRsrc, view.state, orig_state);
 	}
 	actives.erase(rsrcNodeIdx);
 }
@@ -496,13 +492,7 @@ PassRsrcs RsrcMngr::RequestPassRsrcs(ID3D12Device* device, ID3D12GraphicsCommand
 		auto& typeinfo = typeinfoMap.at(rsrcNodeIdx);
 
 		if (view.state != state) {
-			cmdList->ResourceBarrier(
-				1,
-				&CD3DX12_RESOURCE_BARRIER::Transition(
-					view.pRsrc,
-					view.state, state
-				)
-			);
+			DirectX::TransitionResource(cmdList, view.pRsrc, view.state, state);
 			view.state = state;
 		}
 

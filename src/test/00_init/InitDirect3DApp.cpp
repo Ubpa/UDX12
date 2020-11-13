@@ -79,8 +79,8 @@ void InitDirect3DApp::Draw(const GameTimer& gt)
     ThrowIfFailed(mCommandList->Reset(mDirectCmdListAlloc.Get(), nullptr));
 
 	// Indicate a state transition on the resource usage.
-	mCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(CurrentBackBuffer(),
-		D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET));
+	DirectX::TransitionResource(mCommandList.Get(), CurrentBackBuffer(),
+		D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
 
     // Set the viewport and scissor rect.  This needs to be reset whenever the command list is reset.
     mCommandList->RSSetViewports(1, &mScreenViewport);
@@ -92,11 +92,13 @@ void InitDirect3DApp::Draw(const GameTimer& gt)
 	
     // Specify the buffers we are going to render to.
 	// 'OM' -> Output Merge
-	mCommandList->OMSetRenderTargets(1, &CurrentBackBufferView(), true, &DepthStencilView());
+	const auto curBackView = CurrentBackBufferView();
+	const auto depthView = CurrentBackBufferView();
+	mCommandList->OMSetRenderTargets(1, &curBackView, true, &depthView);
 	
     // Indicate a state transition on the resource usage.
-	mCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(CurrentBackBuffer(),
-		D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT));
+	DirectX::TransitionResource(mCommandList.Get(), CurrentBackBuffer(),
+		D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
 
     // Done recording commands.
 	ThrowIfFailed(mCommandList->Close());
