@@ -9,10 +9,12 @@ void UDX12::Device::CreateCommittedResource(
     SIZE_T size,
     ID3D12Resource** resources)
 {
+    const auto defaultHeapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
+    const auto bufferDesc = CD3DX12_RESOURCE_DESC::Buffer(size);
     ThrowIfFailed(raw->CreateCommittedResource(
-        &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT),
+        &defaultHeapProperties,
         D3D12_HEAP_FLAG_NONE,
-        &CD3DX12_RESOURCE_DESC::Buffer(size),
+        &bufferDesc,
         D3D12_RESOURCE_STATE_COMMON,
         nullptr,
         IID_PPV_ARGS(resources)));
