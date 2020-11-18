@@ -13,7 +13,7 @@ using namespace std;
 
 RsrcMngr::RsrcMngr() {
 	csuDynamicDH = new DynamicSuballocMngr{
-		*DescriptorHeapMngr::Instance().GetCSUGpuDH(),
+		DescriptorHeapMngr::Instance().GetCSUGpuDH(),
 		256,
 		"RsrcMngr::csuDynamicDH" };
 }

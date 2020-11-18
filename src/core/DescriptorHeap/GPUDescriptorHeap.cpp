@@ -3,14 +3,13 @@
 using namespace Ubpa;
 
 UDX12::GPUDescriptorHeap::GPUDescriptorHeap(
-    ID3D12Device*               Device,
+    ID3D12Device*               device,
     uint32_t                    NumDescriptorsInHeap,
     uint32_t                    NumDynamicDescriptors,
     D3D12_DESCRIPTOR_HEAP_TYPE  Type,
     D3D12_DESCRIPTOR_HEAP_FLAGS Flags)
     :
-    // clang-format off
-    m_Device{Device},
+    m_Device{device},
     m_HeapDesc
     {
         Type,
@@ -23,36 +22,23 @@ UDX12::GPUDescriptorHeap::GPUDescriptorHeap(
         [&]
         {
               CComPtr<ID3D12DescriptorHeap> pHeap;
-              Device->CreateDescriptorHeap(&m_HeapDesc, __uuidof(pHeap), reinterpret_cast<void**>(&pHeap));
+              device->CreateDescriptorHeap(&m_HeapDesc, __uuidof(pHeap), reinterpret_cast<void**>(&pHeap));
               return pHeap;
         }()
     },
-    m_DescriptorSize           {Device->GetDescriptorHandleIncrementSize(Type)},
-    m_HeapAllocationManager    {Device, *this, 0, m_pd3d12DescriptorHeap, 0, NumDescriptorsInHeap},
-    m_DynamicAllocationsManager{Device, *this, 1, m_pd3d12DescriptorHeap, NumDescriptorsInHeap, NumDynamicDescriptors}
-// clang-format on
+    m_DescriptorSize           {device->GetDescriptorHandleIncrementSize(Type)},
+    m_HeapAllocationManager    {device, *this, StaticHeapAllocatonManagerID, m_pd3d12DescriptorHeap, 0, NumDescriptorsInHeap},
+    m_DynamicAllocationsManager{device, *this, DynamicHeapAllocatonManagerID, m_pd3d12DescriptorHeap, NumDescriptorsInHeap, NumDynamicDescriptors}
 {
 }
 
-UDX12::GPUDescriptorHeap::~GPUDescriptorHeap()
-{
-    auto TotalStaticSize  = m_HeapAllocationManager.GetMaxDescriptors();
-    auto TotalDynamicSize = m_DynamicAllocationsManager.GetMaxDescriptors();
-    auto MaxStaticSize    = m_HeapAllocationManager.GetMaxAllocatedSize();
-    auto MaxDynamicSize   = m_DynamicAllocationsManager.GetMaxAllocatedSize();
-}
+void UDX12::GPUDescriptorHeap::Free(DescriptorHeapAllocation&& allocation) {
+    auto MgrId = allocation.GetAllocationManagerId();
+    assert((MgrId == StaticHeapAllocatonManagerID || MgrId == DynamicHeapAllocatonManagerID)
+        && "Unexpected allocation manager ID");
 
-void UDX12::GPUDescriptorHeap::Free(DescriptorHeapAllocation&& Allocation)
-{
-    auto MgrId = Allocation.GetAllocationManagerId();
-    assert(MgrId == 0 || MgrId == 1 && "Unexpected allocation manager ID");
-
-    if (MgrId == 0)
-    {
-        m_HeapAllocationManager.FreeAllocation(std::move(Allocation));
-    }
-    else
-    {
-        m_DynamicAllocationsManager.FreeAllocation(std::move(Allocation));
-    }
+    if (MgrId == StaticHeapAllocatonManagerID)
+        m_HeapAllocationManager.FreeAllocation(std::move(allocation));
+    else // MgrId == DynamicHeapAllocatonManagerID
+        m_DynamicAllocationsManager.FreeAllocation(std::move(allocation));
 }

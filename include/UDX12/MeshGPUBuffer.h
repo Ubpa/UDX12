@@ -10,7 +10,7 @@ namespace Ubpa::UDX12 {
 	// static / dynamic mesh GPU buffer
 	class MeshGPUBuffer {
 	public:
-		// **static**
+		// [[ static ]]
 		// default buffer
 		// ib_format   : DXGI_FORMAT_R16_UINT / DXGI_FORMAT_R32_UINT
 		// after state : D3D12_RESOURCE_STATE_GENERIC_READ
@@ -26,7 +26,7 @@ namespace Ubpa::UDX12 {
 			const void* ib_data, UINT ib_count, DXGI_FORMAT ib_format
 		);
 		
-		// **dynamic**
+		// [[ dynamic ]]
 		// upload buffer + default buffer
 		MeshGPUBuffer(
 			ID3D12Device* device, ID3D12GraphicsCommandList* cmdList,
@@ -42,13 +42,21 @@ namespace Ubpa::UDX12 {
 		// view of default buffer
 		D3D12_INDEX_BUFFER_VIEW IndexBufferView() const;
 
-		// four cases to update a dynamic mesh
-		// 1. non-editable + non-dirty : ConvertToStatic
-		// 2. non-editable +     dirty : UpdateAndConvertToStatic
-		// 3.     editable + non-dirty : do nothing
-		// 4.     editable +     dirty : Update
+		// [[ Update Strategy ]]
+		// 
+		// # [FOUR] cases to update a [dynamic] mesh
+		//   1. non-editable + non-dirty : ConvertToStatic
+		//   2. non-editable +     dirty : Update + ConvertToStatic
+		//   3.     editable + non-dirty : do nothing
+		//   4.     editable +     dirty : Update
+		// 
+		// # [FOUR] cases to update a [static] mesh
+		//   1. non-editable + non-dirty : do nothing
+		//   2. non-editable +     dirty : ConvertToDynamic + Update + ConvertToStatic
+		//   3.     editable + non-dirty : ConvertToDynamic
+		//   4.     editable +     dirty : ConvertToDynamic + Update
 
-		// update non-static mesh data
+		// update dynamic mesh data
 		// [sync]
 		// - (maybe) construct resized upload buffer
 		// - (maybe) construct resized default buffer
@@ -62,27 +70,22 @@ namespace Ubpa::UDX12 {
 		);
 
 		// set static, delete upload buffer
-		// [sync]
-		// - delete upload buffer
-		void ConvertToStatic();
-
-		// update non-static mesh data
-		// [sync]
-		// - (maybe) construct resized upload buffer
-		// - (maybe) construct resized default buffer
-		// - cpu buffer -> upload buffer
 		// [async]
-		// - upload buffer -> default buffer
 		// - delete upload buffer
-		void UpdateAndConvertToStatic(
-			ResourceDeleteBatch& deleteBatch,
-			ID3D12Device* device, ID3D12GraphicsCommandList* cmdList,
-			const void* vb_data, UINT vb_count, UINT vb_stride,
-			const void* ib_data, UINT ib_count, DXGI_FORMAT ib_format
-		);
+		void ConvertToStatic(ResourceDeleteBatch& deleteBatch);
+
+		// convert static to dynamic
+		// [sync]
+		// - construct upload buffer
+		void ConvertToDynamic(ID3D12Device* device);
+
+		// delete all buffers
+		// [async]
+		// - delete vertexUploadBuffer, indexUploadBuffer, staticVertexBuffer, staticIndexBuffer
+		void Delete(ResourceDeleteBatch& deleteBatch);
 
 	private:
-		bool isStatic;
+		bool isStatic{ true };
 
 		ComPtr<ID3D12Resource> staticVertexBuffer;
 		ComPtr<ID3D12Resource> staticIndexBuffer;

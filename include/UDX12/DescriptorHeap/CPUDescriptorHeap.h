@@ -28,8 +28,7 @@ namespace Ubpa::UDX12 {
     // Render device contains four CPUDescriptorHeap object instances (one for each D3D12 heap type). The heaps are accessed
     // when a texture or a buffer view is created.
     //
-    class CPUDescriptorHeap final : public IDescriptorAllocator
-    {
+    class CPUDescriptorHeap final : public IDescriptorAllocator {
     public:
         // Initializes the heap
         CPUDescriptorHeap(ID3D12Device*               pDevice,
@@ -37,18 +36,16 @@ namespace Ubpa::UDX12 {
                           D3D12_DESCRIPTOR_HEAP_TYPE  Type,
                           D3D12_DESCRIPTOR_HEAP_FLAGS Flags);
 
-        // clang-format off
-        CPUDescriptorHeap             (const CPUDescriptorHeap&) = delete;
-        CPUDescriptorHeap             (CPUDescriptorHeap&&)      = delete;
-        CPUDescriptorHeap& operator = (const CPUDescriptorHeap&) = delete;
-        CPUDescriptorHeap& operator = (CPUDescriptorHeap&&)      = delete;
-        // clang-format on
+        CPUDescriptorHeap            (const CPUDescriptorHeap&) = delete;
+        CPUDescriptorHeap            (CPUDescriptorHeap&&)      = delete;
+        CPUDescriptorHeap& operator= (const CPUDescriptorHeap&) = delete;
+        CPUDescriptorHeap& operator= (CPUDescriptorHeap&&)      = delete;
 
         ~CPUDescriptorHeap();
 
         virtual DescriptorHeapAllocation Allocate(uint32_t Count) override final;
         virtual void                     Free(DescriptorHeapAllocation&& Allocation) override final;
-        virtual uint32_t                 GetDescriptorSize() const override final { return m_DescriptorSize; }
+        virtual uint32_t                 GetDescriptorSize() const noexcept override final { return m_DescriptorSize; }
 
     private:
         ID3D12Device* m_pDevice;
@@ -57,7 +54,7 @@ namespace Ubpa::UDX12 {
         std::mutex                                    m_HeapPoolMutex;
         std::vector<DescriptorHeapAllocMngr>          m_HeapPool;
         // Indices of available descriptor heap managers
-        std::unordered_set<size_t, std::hash<size_t>> m_AvailableHeaps;
+        std::unordered_set<size_t>                    m_AvailableHeaps;
 
         D3D12_DESCRIPTOR_HEAP_DESC m_HeapDesc;
         const UINT                 m_DescriptorSize = 0;

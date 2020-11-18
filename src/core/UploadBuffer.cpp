@@ -9,10 +9,10 @@ UDX12::UploadBuffer::UploadBuffer(ID3D12Device* device, UINT64 size, D3D12_RESOU
 {
     assert(size > 0);
 
-	const auto defaultHeapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
+	const auto uploadHeapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
 	const auto bufferDesc = CD3DX12_RESOURCE_DESC::Buffer(size, flag);
     ThrowIfFailed(device->CreateCommittedResource(
-        &defaultHeapProperties,
+        &uploadHeapProperties,
         D3D12_HEAP_FLAG_NONE,
         &bufferDesc,
         D3D12_RESOURCE_STATE_GENERIC_READ,
@@ -44,11 +44,11 @@ void UDX12::UploadBuffer::CopyConstruct(
 	assert(resource);
 	auto desc = CD3DX12_RESOURCE_DESC::Buffer(numBytes, resFlags);
 
-	CD3DX12_HEAP_PROPERTIES heapProperties(D3D12_HEAP_TYPE_DEFAULT);
+	CD3DX12_HEAP_PROPERTIES defaultHeapProperties(D3D12_HEAP_TYPE_DEFAULT);
 
 	ComPtr<ID3D12Resource> res;
 	ThrowIfFailed(device->CreateCommittedResource(
-		&heapProperties,
+		&defaultHeapProperties,
 		D3D12_HEAP_FLAG_NONE,
 		&desc,
 		D3D12_RESOURCE_STATE_COPY_DEST,
@@ -62,22 +62,6 @@ void UDX12::UploadBuffer::CopyConstruct(
 	DirectX::TransitionResource(cmdList, res.Get(), D3D12_RESOURCE_STATE_COPY_DEST, afterState);
 
 	*pBuffer = res.Detach();
-}
-
-void UDX12::UploadBuffer::MoveConstruct(
-	size_t dstOffset, size_t srcOffset, size_t numBytes,
-	ResourceDeleteBatch& deleteBatch,
-	ID3D12Device* device,
-	ID3D12GraphicsCommandList* cmdList,
-	D3D12_RESOURCE_STATES afterState,
-	ID3D12Resource** pBuffer, // out com ptr
-	D3D12_RESOURCE_FLAGS resFlags
-) {
-	CopyConstruct(
-		dstOffset, srcOffset, numBytes,
-		device, cmdList, afterState, pBuffer, resFlags
-	);
-	Delete(deleteBatch);
 }
 
 void UDX12::UploadBuffer::CopyAssign(
@@ -95,21 +79,6 @@ void UDX12::UploadBuffer::CopyAssign(
 	DirectX::TransitionResource(cmdList, dst, D3D12_RESOURCE_STATE_COPY_DEST, state);
 }
 
-void UDX12::UploadBuffer::MoveAssign(
-	size_t dstOffset, size_t srcOffset, size_t numBytes,
-	ResourceDeleteBatch& deleteBatch,
-	ID3D12GraphicsCommandList* cmdList,
-    ID3D12Resource* dst,
-    D3D12_RESOURCE_STATES state
-) {
-	CopyAssign(
-		dstOffset, srcOffset, numBytes,
-		cmdList, dst, state
-	);
-
-	Delete(deleteBatch);
-}
-
 void UDX12::UploadBuffer::Delete(ResourceDeleteBatch& deleteBatch) {
 	assert(resource);
 	resource->Unmap(0, nullptr);
@@ -125,6 +94,13 @@ void UDX12::UploadBuffer::Delete(ResourceDeleteBatch& deleteBatch) {
 
 UDX12::DynamicUploadBuffer::DynamicUploadBuffer(ID3D12Device* device, D3D12_RESOURCE_FLAGS flag)
     : device{ device }, flag{ flag }{}
+
+UDX12::DynamicUploadBuffer::DynamicUploadBuffer(ID3D12Device* device, UINT64 size, D3D12_RESOURCE_FLAGS flag)
+	: device{ device }, flag{ flag }
+{
+	assert(size > 0);
+	buffer = std::make_unique<UDX12::UploadBuffer>(device, size, flag);
+}
 
 ID3D12Resource* UDX12::DynamicUploadBuffer::GetResource() const noexcept {
     return buffer ? buffer->GetResource() : nullptr;
@@ -172,23 +148,6 @@ void UDX12::DynamicUploadBuffer::CopyConstruct(
 	);
 }
 
-void UDX12::DynamicUploadBuffer::MoveConstruct(
-	size_t dstOffset, size_t srcOffset, size_t numBytes,
-	ResourceDeleteBatch& deleteBatch,
-	ID3D12Device* device,
-	ID3D12GraphicsCommandList* cmdList,
-	D3D12_RESOURCE_STATES afterState,
-	ID3D12Resource** pBuffer, // out com ptr
-	D3D12_RESOURCE_FLAGS resFlags
-) {
-	assert(buffer);
-	buffer->MoveConstruct(
-		dstOffset, srcOffset, numBytes,
-		deleteBatch, device, cmdList, afterState, pBuffer, resFlags
-	);
-	buffer.reset();
-}
-
 void UDX12::DynamicUploadBuffer::CopyAssign(
 	size_t dstOffset, size_t srcOffset, size_t numBytes,
 	ID3D12GraphicsCommandList* cmdList,
@@ -202,17 +161,8 @@ void UDX12::DynamicUploadBuffer::CopyAssign(
 	);
 }
 
-void UDX12::DynamicUploadBuffer::MoveAssign(
-	size_t dstOffset, size_t srcOffset, size_t numBytes,
-	ResourceDeleteBatch& deleteBatch,
-	ID3D12GraphicsCommandList* cmdList,
-	ID3D12Resource* dst,
-	D3D12_RESOURCE_STATES state
-) {
-	assert(buffer);
-	buffer->MoveAssign(
-		dstOffset, srcOffset, numBytes,
-		deleteBatch, cmdList, dst, state
-	);
+// move resource to deleteBatch
+void UDX12::DynamicUploadBuffer::Delete(ResourceDeleteBatch& deleteBatch) {
+	buffer->Delete(deleteBatch);
 	buffer.reset();
 }

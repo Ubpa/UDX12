@@ -22,36 +22,33 @@ namespace Ubpa::UDX12 {
 	class DynamicSuballocMngr final : public IDescriptorAllocator {
     public:
         DynamicSuballocMngr(
-            GPUDescriptorHeap& ParentGPUHeap,
+            GPUDescriptorHeap* ParentGPUHeap,
             uint32_t           DynamicChunkSize,
-            std::string        ManagerName);
+            std::string        ManagerName) noexcept;
 
-        // clang-format off
-        DynamicSuballocMngr             (const DynamicSuballocMngr&) = delete;
-        DynamicSuballocMngr             (DynamicSuballocMngr&&)      = delete;
-        DynamicSuballocMngr& operator = (const DynamicSuballocMngr&) = delete;
-        DynamicSuballocMngr& operator = (DynamicSuballocMngr&&)      = delete;
-        // clang-format on
+        DynamicSuballocMngr            (const DynamicSuballocMngr&) = delete;
+        DynamicSuballocMngr            (DynamicSuballocMngr&&)      = delete;
+        DynamicSuballocMngr& operator= (const DynamicSuballocMngr&) = delete;
+        DynamicSuballocMngr& operator= (DynamicSuballocMngr&&)      = delete;
 
         ~DynamicSuballocMngr();
 
-        void ReleaseAllocations();
-
-        virtual DescriptorHeapAllocation Allocate(uint32_t Count) override final;
-        virtual void                     Free(DescriptorHeapAllocation&& Allocation) override final
-        {
+        virtual DescriptorHeapAllocation Allocate(uint32_t count) override final;
+        virtual void                     Free(DescriptorHeapAllocation&& allocation) noexcept override final {
             // Do nothing. Dynamic allocations are not disposed individually, but as whole chunks
             // at the end of the frame by ReleaseAllocations()
-            Allocation.Reset();
+            allocation.Reset();
         }
 
-        virtual uint32_t GetDescriptorSize() const override final { return m_ParentGPUHeap.GetDescriptorSize(); }
+        void ReleaseAllocations();
 
-        size_t GetSuballocationCount() const { return m_Suballocations.size(); }
+        virtual uint32_t GetDescriptorSize() const noexcept override final { return m_ParentGPUHeap->GetDescriptorSize(); }
+
+        size_t GetSuballocationCount() const noexcept { return m_Suballocations.size(); }
 
     private:
         // Parent GPU descriptor heap that is used to allocate chunks
-        GPUDescriptorHeap& m_ParentGPUHeap;
+        GPUDescriptorHeap* m_ParentGPUHeap;
         std::string        m_ManagerName;
 
         // List of chunks allocated from the master GPU descriptor heap. All chunks are disposed at the end

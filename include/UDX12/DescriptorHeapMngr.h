@@ -24,10 +24,10 @@ namespace Ubpa::UDX12 {
 			uint32_t numGpuCSU_dynamic
 		);
 
-		CPUDescriptorHeap* GetCSUCpuDH() noexcept { assert(isInit); return CSU_CpuDH; }
-		CPUDescriptorHeap* GetRTVCpuDH() noexcept { assert(isInit); return RTV_CpuDH; }
-		CPUDescriptorHeap* GetDSVCpuDH() noexcept { assert(isInit); return DSV_CpuDH; }
-		GPUDescriptorHeap* GetCSUGpuDH() noexcept { assert(isInit); return CSU_GpuDH; }
+		CPUDescriptorHeap* GetCSUCpuDH() const noexcept { assert(isInit); return CSU_CpuDH; }
+		CPUDescriptorHeap* GetRTVCpuDH() const noexcept { assert(isInit); return RTV_CpuDH; }
+		CPUDescriptorHeap* GetDSVCpuDH() const noexcept { assert(isInit); return DSV_CpuDH; }
+		GPUDescriptorHeap* GetCSUGpuDH() const noexcept { assert(isInit); return CSU_GpuDH; }
 
 		void Clear();
 

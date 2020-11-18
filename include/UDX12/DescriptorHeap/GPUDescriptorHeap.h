@@ -49,8 +49,7 @@ namespace Ubpa::UDX12 {
     // | m_DynamicGPUDescriptorAllocator[SAMPLER]       |             | m_DynamicGPUDescriptorAllocator[SAMPLER]       |
     // |________________________________________________|             |________________________________________________|
     //
-    class GPUDescriptorHeap final : public IDescriptorAllocator
-    {
+    class GPUDescriptorHeap final : public IDescriptorAllocator {
     public:
         GPUDescriptorHeap(ID3D12Device*               pDevice,
                           uint32_t                    NumDescriptorsInHeap,
@@ -58,32 +57,24 @@ namespace Ubpa::UDX12 {
                           D3D12_DESCRIPTOR_HEAP_TYPE  Type,
                           D3D12_DESCRIPTOR_HEAP_FLAGS Flags);
 
-        // clang-format off
-        GPUDescriptorHeap             (const GPUDescriptorHeap&) = delete;
-        GPUDescriptorHeap             (GPUDescriptorHeap&&)      = delete;
-        GPUDescriptorHeap& operator = (const GPUDescriptorHeap&) = delete;
-        GPUDescriptorHeap& operator = (GPUDescriptorHeap&&)      = delete;
-        // clang-format on
+        GPUDescriptorHeap            (const GPUDescriptorHeap&) = delete;
+        GPUDescriptorHeap            (GPUDescriptorHeap&&)      = delete;
+        GPUDescriptorHeap& operator= (const GPUDescriptorHeap&) = delete;
+        GPUDescriptorHeap& operator= (GPUDescriptorHeap&&)      = delete;
 
-        ~GPUDescriptorHeap();
+        virtual DescriptorHeapAllocation Allocate(uint32_t count) override final
+        { return m_HeapAllocationManager.Allocate(count); }
 
-        virtual DescriptorHeapAllocation Allocate(uint32_t Count) override final
-        {
-            return m_HeapAllocationManager.Allocate(Count);
-        }
+        DescriptorHeapAllocation AllocateDynamic(uint32_t count)
+        { return m_DynamicAllocationsManager.Allocate(count); }
 
-        virtual void     Free(DescriptorHeapAllocation&& Allocation) override final;
+        virtual void     Free(DescriptorHeapAllocation&&) override final;
         virtual uint32_t GetDescriptorSize() const override final { return m_DescriptorSize; }
 
-        DescriptorHeapAllocation AllocateDynamic(uint32_t Count)
-        {
-            return m_DynamicAllocationsManager.Allocate(Count);
-        }
-
-        const D3D12_DESCRIPTOR_HEAP_DESC& GetHeapDesc() const { return m_HeapDesc; }
-        uint32_t                          GetMaxStaticDescriptors() const { return m_HeapAllocationManager.GetMaxDescriptors(); }
-        uint32_t                          GetMaxDynamicDescriptors() const { return m_DynamicAllocationsManager.GetMaxDescriptors(); }
-        ID3D12DescriptorHeap*             GetDescriptorHeap() const { return m_pd3d12DescriptorHeap.p; }
+        const D3D12_DESCRIPTOR_HEAP_DESC& GetHeapDesc() const noexcept { return m_HeapDesc; }
+        uint32_t                          GetMaxStaticDescriptors() const noexcept { return m_HeapAllocationManager.GetMaxDescriptors(); }
+        uint32_t                          GetMaxDynamicDescriptors() const noexcept { return m_DynamicAllocationsManager.GetMaxDescriptors(); }
+        ID3D12DescriptorHeap*             GetDescriptorHeap() const noexcept { return m_pd3d12DescriptorHeap.p; }
 
     protected:
         ID3D12Device* m_Device;
@@ -92,6 +83,9 @@ namespace Ubpa::UDX12 {
         CComPtr<ID3D12DescriptorHeap>    m_pd3d12DescriptorHeap;
 
         const UINT m_DescriptorSize;
+
+        static constexpr size_t StaticHeapAllocatonManagerID  = 0;
+        static constexpr size_t DynamicHeapAllocatonManagerID = 1;
 
         // Allocation manager for static/mutable part
         DescriptorHeapAllocMngr m_HeapAllocationManager;

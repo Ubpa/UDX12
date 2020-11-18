@@ -93,7 +93,7 @@ void InitDirect3DApp::Draw(const GameTimer& gt)
     // Specify the buffers we are going to render to.
 	// 'OM' -> Output Merge
 	const auto curBackView = CurrentBackBufferView();
-	const auto depthView = CurrentBackBufferView();
+	const auto depthView = DepthStencilView();
 	mCommandList->OMSetRenderTargets(1, &curBackView, true, &depthView);
 	
     // Indicate a state transition on the resource usage.

@@ -16,159 +16,79 @@ namespace Ubpa::UDX12 {
     //                   |
     //                  m_FirstGpuHandle
     //
-    class DescriptorHeapAllocation
-    {
+    class DescriptorHeapAllocation {
     public:
         // Creates null allocation
-        DescriptorHeapAllocation() noexcept :
-            // clang-format off
-            m_NumHandles{ 0 }, // One null descriptor handle
-            m_pDescriptorHeap{ nullptr },
-            m_DescriptorSize{ 0 }
-            // clang-format on
-        {
-            m_FirstCpuHandle.ptr = 0;
-            m_FirstGpuHandle.ptr = 0;
-        }
+        DescriptorHeapAllocation() noexcept;
 
         // Initializes non-null allocation
-        DescriptorHeapAllocation(IDescriptorAllocator& Allocator,
-            ID3D12DescriptorHeap* pHeap,
+        DescriptorHeapAllocation(
+            IDescriptorAllocator*       pAllocator,
+            ID3D12DescriptorHeap*       pHeap,
             D3D12_CPU_DESCRIPTOR_HANDLE CpuHandle,
             D3D12_GPU_DESCRIPTOR_HANDLE GpuHandle,
             uint32_t                    NHandles,
-            uint16_t                    AllocationManagerId) noexcept :
-            // clang-format off
-            m_FirstCpuHandle{ CpuHandle },
-            m_FirstGpuHandle{ GpuHandle },
-            m_pAllocator{ &Allocator },
-            m_NumHandles{ NHandles },
-            m_pDescriptorHeap{ pHeap },
-            m_AllocationManagerId{ AllocationManagerId }
-            // clang-format on
-        {
-            assert(m_pAllocator != nullptr && m_pDescriptorHeap != nullptr);
-            auto DescriptorSize = m_pAllocator->GetDescriptorSize();
-            assert("DescriptorSize exceeds allowed limit" && DescriptorSize < std::numeric_limits<uint16_t>::max());
-            m_DescriptorSize = static_cast<uint16_t>(DescriptorSize);
-        }
+            uint16_t                    AllocationManagerId
+        ) noexcept;
 
         // Move constructor (copy is not allowed)
-        DescriptorHeapAllocation(DescriptorHeapAllocation&& Allocation) noexcept :
-            // clang-format off
-            m_FirstCpuHandle{ std::move(Allocation.m_FirstCpuHandle) },
-            m_FirstGpuHandle{ std::move(Allocation.m_FirstGpuHandle) },
-            m_NumHandles{ std::move(Allocation.m_NumHandles) },
-            m_pAllocator{ std::move(Allocation.m_pAllocator) },
-            m_AllocationManagerId{ std::move(Allocation.m_AllocationManagerId) },
-            m_pDescriptorHeap{ std::move(Allocation.m_pDescriptorHeap) },
-            m_DescriptorSize{ std::move(Allocation.m_DescriptorSize) }
-            // clang-format on
-        {
-            Allocation.Reset();
-        }
-
-        // Move assignment (assignment is not allowed)
-        DescriptorHeapAllocation& operator=(DescriptorHeapAllocation&& Allocation) noexcept
-        {
-            m_FirstCpuHandle = std::move(Allocation.m_FirstCpuHandle);
-            m_FirstGpuHandle = std::move(Allocation.m_FirstGpuHandle);
-            m_NumHandles = std::move(Allocation.m_NumHandles);
-            m_pAllocator = std::move(Allocation.m_pAllocator);
-            m_AllocationManagerId = std::move(Allocation.m_AllocationManagerId);
-            m_pDescriptorHeap = std::move(Allocation.m_pDescriptorHeap);
-            m_DescriptorSize = std::move(Allocation.m_DescriptorSize);
-
-            Allocation.Reset();
-
-            return *this;
-        }
-
-        void Reset()
-        {
-            m_FirstCpuHandle.ptr = 0;
-            m_FirstGpuHandle.ptr = 0;
-            m_pAllocator = nullptr;
-            m_pDescriptorHeap = nullptr;
-            m_NumHandles = 0;
-            m_AllocationManagerId = static_cast<uint16_t>(-1);
-            m_DescriptorSize = 0;
-        }
-
-        // clang-format off
-        DescriptorHeapAllocation(const DescriptorHeapAllocation&) = delete;
-        DescriptorHeapAllocation& operator=(const DescriptorHeapAllocation&) = delete;
-        // clang-format on
-
+        DescriptorHeapAllocation(DescriptorHeapAllocation&& Allocation) noexcept;
 
         // Destructor automatically releases this allocation through the allocator
-        ~DescriptorHeapAllocation()
-        {
-            if (!IsNull() && m_pAllocator)
-                m_pAllocator->Free(std::move(*this));
-            // Allocation must have been disposed by the allocator
-            assert("Non-null descriptor is being destroyed" && IsNull());
-        }
+        ~DescriptorHeapAllocation();
+
+        // Move assignment (assignment is not allowed)
+        DescriptorHeapAllocation& operator=(DescriptorHeapAllocation&& Allocation) noexcept;
+
+        void Reset() noexcept;
+
+        DescriptorHeapAllocation(const DescriptorHeapAllocation&) = delete;
+        DescriptorHeapAllocation& operator=(const DescriptorHeapAllocation&) = delete;
 
         // Returns CPU descriptor handle at the specified offset
-        D3D12_CPU_DESCRIPTOR_HANDLE GetCpuHandle(uint32_t Offset = 0) const
-        {
+        D3D12_CPU_DESCRIPTOR_HANDLE GetCpuHandle(uint32_t Offset = 0) const noexcept {
             assert(Offset >= 0 && Offset < m_NumHandles);
-
-            D3D12_CPU_DESCRIPTOR_HANDLE CPUHandle = m_FirstCpuHandle;
-            CPUHandle.ptr += m_DescriptorSize * Offset;
-
-            return CPUHandle;
+            return { m_FirstCpuHandle.ptr + m_DescriptorSize * Offset };
         }
 
         // Returns GPU descriptor handle at the specified offset
-        D3D12_GPU_DESCRIPTOR_HANDLE GetGpuHandle(uint32_t Offset = 0) const
-        {
+        D3D12_GPU_DESCRIPTOR_HANDLE GetGpuHandle(uint32_t Offset = 0) const noexcept {
             assert(Offset >= 0 && Offset < m_NumHandles);
-            D3D12_GPU_DESCRIPTOR_HANDLE GPUHandle = m_FirstGpuHandle;
-            GPUHandle.ptr += m_DescriptorSize * Offset;
-
-            return GPUHandle;
+            return { m_FirstGpuHandle.ptr + m_DescriptorSize * Offset };
         }
 
         // Returns pointer to D3D12 descriptor heap that contains this allocation
-        ID3D12DescriptorHeap* GetDescriptorHeap() { return m_pDescriptorHeap; }
+        ID3D12DescriptorHeap* GetDescriptorHeap() const noexcept { return m_pDescriptorHeap; }
 
-
-        // clang-format off
-        uint32_t GetNumHandles()          const { return m_NumHandles; }
-        bool     IsNull()                 const { return m_FirstCpuHandle.ptr == 0; }
-        bool     IsShaderVisible()        const { return m_FirstGpuHandle.ptr != 0; }
-        uint16_t GetAllocationManagerId() const { return m_AllocationManagerId; }
-        uint16_t GetDescriptorSize()      const { return m_DescriptorSize; }
-        // clang-format on
+        uint32_t GetNumHandles()          const noexcept { return m_NumHandles; }
+        bool     IsNull()                 const noexcept { return m_FirstCpuHandle.ptr == 0; }
+        bool     IsShaderVisible()        const noexcept { return m_FirstGpuHandle.ptr != 0; }
+        uint16_t GetAllocationManagerId() const noexcept { return m_AllocationManagerId; }
+        uint16_t GetDescriptorSize()      const noexcept { return m_DescriptorSize; }
 
     private:
         // First CPU descriptor handle in this allocation
-        D3D12_CPU_DESCRIPTOR_HANDLE m_FirstCpuHandle = { 0 };
+        D3D12_CPU_DESCRIPTOR_HANDLE m_FirstCpuHandle{ 0 };
 
         // First GPU descriptor handle in this allocation
-        D3D12_GPU_DESCRIPTOR_HANDLE m_FirstGpuHandle = { 0 };
-
-        // Keep strong reference to the parent heap to make sure it is alive while allocation is alive - TOO EXPENSIVE
-        //RefCntAutoPtr<IDescriptorAllocator> m_pAllocator;
+        D3D12_GPU_DESCRIPTOR_HANDLE m_FirstGpuHandle{ 0 };
 
         // Pointer to the descriptor heap allocator that created this allocation
-        IDescriptorAllocator* m_pAllocator = nullptr;
+        IDescriptorAllocator* m_pAllocator{ nullptr };
 
         // Pointer to the D3D12 descriptor heap that contains descriptors in this allocation
-        ID3D12DescriptorHeap* m_pDescriptorHeap = nullptr;
+        ID3D12DescriptorHeap* m_pDescriptorHeap{ nullptr };
 
         // Number of descriptors in the allocation
-        uint32_t m_NumHandles = 0;
+        uint32_t m_NumHandles{ 0 };
 
         // Allocation manager ID. One allocator may support several
         // allocation managers. This field is required to identify
         // the manager within the allocator that was used to create
         // this allocation
-        uint16_t m_AllocationManagerId = static_cast<uint16_t>(-1);
+        uint16_t m_AllocationManagerId{ static_cast<uint16_t>(-1) };
 
         // Descriptor size
-        uint16_t m_DescriptorSize = 0;
+        uint16_t m_DescriptorSize{ 0 };
     };
 }

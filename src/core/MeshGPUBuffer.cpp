@@ -35,12 +35,11 @@ UDX12::MeshGPUBuffer::MeshGPUBuffer(
 	ID3D12Device* device, ID3D12GraphicsCommandList* cmdList,
 	const void* vb_data, UINT vb_count, UINT vb_stride,
 	const void* ib_data, UINT ib_count, DXGI_FORMAT ib_format
-) :
-	isStatic{ false }
+)
 {
-	vertexUploadBuffer = std::make_unique<DynamicUploadBuffer>(device);
-	indexUploadBuffer = std::make_unique<DynamicUploadBuffer>(device);
-	Update(device, cmdList,
+	ConvertToDynamic(device);
+	Update(
+		device, cmdList,
 		vb_data, vb_count, vb_stride,
 		ib_data, ib_count, ib_format
 	);
@@ -84,70 +83,34 @@ void UDX12::MeshGPUBuffer::Update(
 		indexUploadBuffer->CopyConstruct(0, 0, ib_size, device, cmdList, D3D12_RESOURCE_STATE_GENERIC_READ, &staticIndexBuffer);
 }
 
-void UDX12::MeshGPUBuffer::ConvertToStatic() {
+void UDX12::MeshGPUBuffer::ConvertToStatic(ResourceDeleteBatch& deleteBatch) {
 	assert(!IsStatic());
+	vertexUploadBuffer->Delete(deleteBatch);
+	indexUploadBuffer->Delete(deleteBatch);
 	vertexUploadBuffer.reset();
 	indexUploadBuffer.reset();
 	isStatic = true;
 }
 
-void UDX12::MeshGPUBuffer::UpdateAndConvertToStatic(
-	ResourceDeleteBatch& deleteBatch,
-	ID3D12Device* device, ID3D12GraphicsCommandList* cmdList,
-	const void* vb_data, UINT vb_count, UINT vb_stride,
-	const void* ib_data, UINT ib_count, DXGI_FORMAT ib_format
-) {
-	assert(!IsStatic());
+void UDX12::MeshGPUBuffer::ConvertToDynamic(ID3D12Device* device) {
+	assert(IsStatic());
+	isStatic = false;
+	vertexUploadBuffer = std::make_unique<DynamicUploadBuffer>(device);
+	indexUploadBuffer = std::make_unique<DynamicUploadBuffer>(device);
+}
 
-	// 1. update upload heap buffer data
-	assert(ib_format == DXGI_FORMAT_R16_UINT || ib_format == DXGI_FORMAT_R32_UINT);
-
-	UINT ib_stride = ib_format == DXGI_FORMAT_R16_UINT ? 2 : 4;
-
-	UINT vb_size = vb_count * vb_stride;
-	UINT ib_size = ib_count * ib_stride;
-
-	vertexUploadBuffer->FastReserve(vb_size);
-	indexUploadBuffer->FastReserve(ib_size);
-
-	vertexUploadBuffer->Set(0, vb_data, vb_size);
-	indexUploadBuffer->Set(0, ib_data, ib_size);
-
-	vertexByteStride = vb_stride;
-	vertexBufferByteSize = vb_size;
-	indexFormat = ib_format;
-	indexBufferByteSize = ib_size;
-
-	// 2. move upload heap buffer data to default heap buffer
-	// **shrink** default heap buffer
-	if (staticVertexBuffer && staticVertexBuffer->GetDesc().Width == vertexBufferByteSize) {
-		vertexUploadBuffer->MoveAssign(
-			0, 0, vertexBufferByteSize,
-			deleteBatch, cmdList, staticVertexBuffer.Get()
-		);
-	}
-	else {
-		vertexUploadBuffer->MoveConstruct(
-			0, 0, vertexBufferByteSize,
-			deleteBatch, device, cmdList, D3D12_RESOURCE_STATE_GENERIC_READ, &staticVertexBuffer
-		);
+void UDX12::MeshGPUBuffer::Delete(ResourceDeleteBatch& deleteBatch) {
+	if (!IsStatic()) {
+		vertexUploadBuffer->Delete(deleteBatch);
+		indexUploadBuffer->Delete(deleteBatch);
+		vertexUploadBuffer.reset();
+		indexUploadBuffer.reset();
 	}
 
-	if (staticIndexBuffer && staticIndexBuffer->GetDesc().Width == indexBufferByteSize) {
-		indexUploadBuffer->MoveAssign(
-			0, 0, indexBufferByteSize,
-			deleteBatch, cmdList, staticIndexBuffer.Get()
-		);
-	}
-	else {
-		indexUploadBuffer->MoveConstruct(
-			0, 0, indexBufferByteSize,
-			deleteBatch, device, cmdList, D3D12_RESOURCE_STATE_GENERIC_READ, &staticIndexBuffer
-		);
-	}
-
-	// 3. set static
-	ConvertToStatic();
+	deleteBatch.Add(staticVertexBuffer.Get());
+	deleteBatch.Add(staticIndexBuffer.Get());
+	staticVertexBuffer.Detach();
+	staticIndexBuffer.Detach();
 }
 
 D3D12_VERTEX_BUFFER_VIEW UDX12::MeshGPUBuffer::VertexBufferView() const {

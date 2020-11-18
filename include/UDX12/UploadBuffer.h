@@ -29,6 +29,8 @@ namespace Ubpa::UDX12 {
 		// [sync]
 		// - cpu buffer -> upload buffer
 		void Set(UINT64 offset, const void* data, UINT64 size);
+		template<typename T>
+		void Set(UINT64 offset, const T* data) { Set(offset, data, sizeof(T)); }
 
 		// create default buffer resource
 		// [sync]
@@ -37,22 +39,6 @@ namespace Ubpa::UDX12 {
 		// - upload buffer -> default buffer
 		void CopyConstruct(
 			size_t dstOffset, size_t srcOffset, size_t numBytes,
-			ID3D12Device* device,
-			ID3D12GraphicsCommandList* cmdList,
-			D3D12_RESOURCE_STATES afterState,
-			ID3D12Resource** pBuffer, // out com ptr
-			D3D12_RESOURCE_FLAGS resFlags = D3D12_RESOURCE_FLAG_NONE
-		);
-
-		// create default buffer resource and delete self
-		// [sync]
-		// - construct default buffer
-		// [async]
-		// - upload buffer -> default buffer
-		// - delete self
-		void MoveConstruct(
-			size_t dstOffset, size_t srcOffset, size_t numBytes,
-			ResourceDeleteBatch& deleteBatch,
 			ID3D12Device* device,
 			ID3D12GraphicsCommandList* cmdList,
 			D3D12_RESOURCE_STATES afterState,
@@ -70,21 +56,9 @@ namespace Ubpa::UDX12 {
 			D3D12_RESOURCE_STATES state = D3D12_RESOURCE_STATE_GENERIC_READ
 		);
 
-		// copy upload buffer to dst and delete self
-		// [async]
-		// - upload buffer -> dst
-		// - delete self
-		void MoveAssign(
-			size_t dstOffset, size_t srcOffset, size_t numBytes,
-			ResourceDeleteBatch& deleteBatch,
-			ID3D12GraphicsCommandList* cmdList,
-			ID3D12Resource* dst,
-			D3D12_RESOURCE_STATES state = D3D12_RESOURCE_STATE_GENERIC_READ
-		);
-	private:
 		// move resource to deleteBatch
 		void Delete(ResourceDeleteBatch& deleteBatch);
-
+	private:
 		ComPtr<ID3D12Resource> resource;
 		BYTE* mappedData;
 		UINT64 size;
@@ -93,6 +67,7 @@ namespace Ubpa::UDX12 {
 	class DynamicUploadBuffer {
 	public:
 		DynamicUploadBuffer(ID3D12Device* device, D3D12_RESOURCE_FLAGS flag = D3D12_RESOURCE_FLAG_NONE);
+		DynamicUploadBuffer(ID3D12Device* device, UINT64 size, D3D12_RESOURCE_FLAGS flag = D3D12_RESOURCE_FLAG_NONE);
 
 		ID3D12Resource* GetResource() const noexcept;
 		UINT64 Size() const noexcept;
@@ -113,21 +88,12 @@ namespace Ubpa::UDX12 {
 		// [sync]
 		// - cpu buffer -> upload buffer
 		void Set(UINT64 offset, const void* data, UINT64 size);
+		template<typename T>
+		void Set(UINT64 offset, const T* data) { Set(offset, data, sizeof(T)); }
 
 		// same with UploadBuffer::CopyConstruct
 		void CopyConstruct(
 			size_t dstOffset, size_t srcOffset, size_t numBytes,
-			ID3D12Device* device,
-			ID3D12GraphicsCommandList* cmdList,
-			D3D12_RESOURCE_STATES afterState,
-			ID3D12Resource** pBuffer, // out com ptr
-			D3D12_RESOURCE_FLAGS resFlags = D3D12_RESOURCE_FLAG_NONE
-		);
-
-		// same with UploadBuffer::MoveConstruct
-		void MoveConstruct(
-			size_t dstOffset, size_t srcOffset, size_t numBytes,
-			ResourceDeleteBatch& deleteBatch,
 			ID3D12Device* device,
 			ID3D12GraphicsCommandList* cmdList,
 			D3D12_RESOURCE_STATES afterState,
@@ -143,14 +109,8 @@ namespace Ubpa::UDX12 {
 			D3D12_RESOURCE_STATES state = D3D12_RESOURCE_STATE_GENERIC_READ
 		);
 
-		// same with UploadBuffer::MoveAssign
-		void MoveAssign(
-			size_t dstOffset, size_t srcOffset, size_t numBytes,
-			ResourceDeleteBatch& deleteBatch,
-			ID3D12GraphicsCommandList* cmdList,
-			ID3D12Resource* dst,
-			D3D12_RESOURCE_STATES state = D3D12_RESOURCE_STATE_GENERIC_READ
-		);
+		// move resource to deleteBatch
+		void Delete(ResourceDeleteBatch& deleteBatch);
 	private:
 		ID3D12Device* device;
 		D3D12_RESOURCE_FLAGS flag;

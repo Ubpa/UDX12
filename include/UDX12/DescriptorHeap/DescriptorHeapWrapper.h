@@ -4,8 +4,8 @@
 
 namespace Ubpa::UDX12 {
     // ref: https://docs.microsoft.com/en-us/windows/win32/direct3d12/creating-descriptor-heaps
-    struct DescriptorHeapWrapper : Util::ComPtrHolder<ID3D12DescriptorHeap>
-    {
+    class DescriptorHeapWrapper : Util::ComPtrHolder<ID3D12DescriptorHeap> {
+    public:
         DescriptorHeapWrapper() { memset(this, 0, sizeof(DescriptorHeapWrapper)); }
 
         HRESULT Create(
@@ -23,28 +23,26 @@ namespace Ubpa::UDX12 {
             memset(this, 0, sizeof(DescriptorHeapWrapper));
         }
 
-        UINT Size() {
+        UINT Size() const noexcept {
             if (IsNull())
                 return 0;
 
-            return raw->GetDesc().NumDescriptors;
+            return Desc.NumDescriptors;
         }
 
-        bool Empty() { return Size() == 0; }
+        bool Empty() const noexcept { return Size() == 0; }
 
-        operator ID3D12DescriptorHeap* () { return raw.Get(); }
+        operator ID3D12DescriptorHeap* () const noexcept { return raw.Get(); }
 
-        D3D12_CPU_DESCRIPTOR_HANDLE hCPU(UINT index)
-        {
-            return { hCPUHeapStart.ptr + index * HandleIncrementSize };
-        }
+        D3D12_CPU_DESCRIPTOR_HANDLE hCPU(UINT index) const noexcept
+        { return { hCPUHeapStart.ptr + index * HandleIncrementSize }; }
 
-        D3D12_GPU_DESCRIPTOR_HANDLE hGPU(UINT index)
-        {
+        D3D12_GPU_DESCRIPTOR_HANDLE hGPU(UINT index) const noexcept {
             assert(Desc.Flags & D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE);
             return { hGPUHeapStart.ptr + index * HandleIncrementSize };
         }
 
+    private:
         D3D12_DESCRIPTOR_HEAP_DESC Desc;
         D3D12_CPU_DESCRIPTOR_HANDLE hCPUHeapStart;
         D3D12_GPU_DESCRIPTOR_HANDLE hGPUHeapStart;

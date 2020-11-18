@@ -20,8 +20,7 @@ namespace Ubpa::UDX12 {
     //  X - used descriptor
     //  O - available descriptor
     //
-    class DescriptorHeapAllocMngr
-    {
+    class DescriptorHeapAllocMngr {
     public:
         // Creates a new D3D12 descriptor heap
         DescriptorHeapAllocMngr(ID3D12Device*                     pDevice,
@@ -38,42 +37,13 @@ namespace Ubpa::UDX12 {
                                 uint32_t               FirstDescriptor,
                                 uint32_t               NumDescriptors);
 
-
         // = default causes compiler error when instantiating std::vector::emplace_back() in Visual Studio 2015 (Version 14.0.23107.0 D14REL)
-        DescriptorHeapAllocMngr(DescriptorHeapAllocMngr&& rhs) noexcept :
-            // clang-format off
-            m_ParentAllocator           {rhs.m_ParentAllocator           },
-            m_pDevice                   {rhs.m_pDevice                   },
-            m_ThisManagerId             {rhs.m_ThisManagerId             },
-            m_HeapDesc                  {rhs.m_HeapDesc                  },
-            m_DescriptorSize            {rhs.m_DescriptorSize            },
-            m_NumDescriptorsInAllocation{rhs.m_NumDescriptorsInAllocation},
-	        m_FirstCPUHandle            {rhs.m_FirstCPUHandle            },
-            m_FirstGPUHandle            {rhs.m_FirstGPUHandle            },
-            m_MaxAllocatedSize          {rhs.m_MaxAllocatedSize          },
-            // Mutex is not movable
-            //m_FreeBlockManagerMutex     (std::move(rhs.m_FreeBlockManagerMutex))
-            m_FreeBlockManager          {std::move(rhs.m_FreeBlockManager)    },
-            m_pd3d12DescriptorHeap      {std::move(rhs.m_pd3d12DescriptorHeap)}
-        // clang-format on
-        {
-            rhs.m_NumDescriptorsInAllocation = 0; // Must be set to zero so that debug check in dtor passes
-            rhs.m_ThisManagerId              = static_cast<size_t>(-1);
-            rhs.m_FirstCPUHandle.ptr         = 0;
-            rhs.m_FirstGPUHandle.ptr         = 0;
-            rhs.m_MaxAllocatedSize           = 0;
-    #ifdef DILIGENT_DEVELOPMENT
-            m_AllocationsCounter.store(rhs.m_AllocationsCounter.load());
-            rhs.m_AllocationsCounter = 0;
-    #endif
-        }
+        DescriptorHeapAllocMngr(DescriptorHeapAllocMngr&& rhs) noexcept;
 
-        // clang-format off
         // No copies or move-assignments
-        DescriptorHeapAllocMngr& operator = (DescriptorHeapAllocMngr&&)      = delete;
-        DescriptorHeapAllocMngr             (const DescriptorHeapAllocMngr&) = delete;
-        DescriptorHeapAllocMngr& operator = (const DescriptorHeapAllocMngr&) = delete;
-        // clang-format on
+        DescriptorHeapAllocMngr& operator= (DescriptorHeapAllocMngr&&)      = delete;
+        DescriptorHeapAllocMngr            (const DescriptorHeapAllocMngr&) = delete;
+        DescriptorHeapAllocMngr& operator= (const DescriptorHeapAllocMngr&) = delete;
 
         ~DescriptorHeapAllocMngr();
 
@@ -81,28 +51,26 @@ namespace Ubpa::UDX12 {
         DescriptorHeapAllocation Allocate(uint32_t Count);
         void                     FreeAllocation(DescriptorHeapAllocation&& Allocation);
 
-        // clang-format off
-        size_t   GetNumAvailableDescriptors() const { return m_FreeBlockManager.GetFreeSize(); }
-	    uint32_t GetMaxDescriptors()          const { return m_NumDescriptorsInAllocation;     }
-        size_t   GetMaxAllocatedSize()        const { return m_MaxAllocatedSize;               }
-        // clang-format on
+        size_t   GetNumAvailableDescriptors() const noexcept { return m_FreeBlockManager.GetFreeSize(); }
+	    uint32_t GetMaxDescriptors()          const noexcept { return m_NumDescriptorsInAllocation;     }
+        size_t   GetMaxAllocatedSize()        const noexcept { return m_MaxAllocatedSize;               }
 
     private:
         IDescriptorAllocator&  m_ParentAllocator;
         ID3D12Device* m_pDevice;
 
         // External ID assigned to this descriptor allocations manager
-        size_t m_ThisManagerId = static_cast<size_t>(-1);
+        size_t m_ThisManagerId{ static_cast<size_t>(-1) };
 
         // Heap description
         const D3D12_DESCRIPTOR_HEAP_DESC m_HeapDesc;
 
-        const UINT m_DescriptorSize = 0;
+        const UINT m_DescriptorSize{ 0 };
 
         // Number of descriptors in the allocation.
         // If this manager was initialized as a subrange in the existing heap,
         // this value may be different from m_HeapDesc.NumDescriptors
-        uint32_t m_NumDescriptorsInAllocation = 0;
+        uint32_t m_NumDescriptorsInAllocation{ 0 };
 
         // Allocations manager used to handle descriptor allocations within the heap
         std::mutex                     m_FreeBlockManagerMutex;
@@ -112,13 +80,15 @@ namespace Ubpa::UDX12 {
         CComPtr<ID3D12DescriptorHeap>  m_pd3d12DescriptorHeap;
 
         // First CPU descriptor handle in the available descriptor range
-        D3D12_CPU_DESCRIPTOR_HANDLE    m_FirstCPUHandle = {0};
+        D3D12_CPU_DESCRIPTOR_HANDLE    m_FirstCPUHandle{ 0 };
 
         // First GPU descriptor handle in the available descriptor range
-        D3D12_GPU_DESCRIPTOR_HANDLE    m_FirstGPUHandle = {0};
+        D3D12_GPU_DESCRIPTOR_HANDLE    m_FirstGPUHandle{ 0 };
 
-        size_t m_MaxAllocatedSize = 0;
+        size_t m_MaxAllocatedSize{ 0 };
 
-        // Note: when adding new members, do not forget to update move ctor
+#ifndef NDEBUG
+        std::atomic_int32_t m_AllocationsCounter = 0;
+#endif // !NDEBUG
     };
 }
