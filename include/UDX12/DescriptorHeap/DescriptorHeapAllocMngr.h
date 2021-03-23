@@ -7,7 +7,7 @@
 
 #include "IDescriptorAllocator.h"
 
-#include <UContainer/VarSizeAllocMngr.h>
+#include "../VarSizeAllocMngr.h"
 
 #include <mutex>
 

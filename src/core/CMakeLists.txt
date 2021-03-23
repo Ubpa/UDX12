@@ -1,3 +1,12 @@
+set(c_options_private "")
+if(MSVC)
+  list(APPEND c_options_private "/wd4996")
+elseif("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
+  list(APPEND c_options_private "")
+elseif("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
+  list(APPEND c_options_private "")
+endif()
+
 Ubpa_AddTarget(
   MODE STATIC
   RET_TARGET_NAME core
@@ -9,7 +18,6 @@ Ubpa_AddTarget(
   INC_PRIVATE
     "${PROJECT_SOURCE_DIR}/include/UDX12/_deps/DirectXTK12"
   LIB
-    Ubpa::UContainer_core
     Ubpa::UTemplate_core
     Ubpa::UFG_core
   LIB_INTERFACE
@@ -17,6 +25,8 @@ Ubpa_AddTarget(
     D3D12.lib
     dxgi.lib
     dxguid.lib
+  C_OPTION_PRIVATE
+    ${c_options_private}
   DEFINE
     UNICODE
 	_UNICODE

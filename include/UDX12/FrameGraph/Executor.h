@@ -2,7 +2,7 @@
 
 #include "Rsrc.h"
 
-#include <UFG/Compiler.h>
+#include <UFG/Compiler.hpp>
 
 #include <functional>
 

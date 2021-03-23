@@ -1,6 +1,6 @@
 #include <UDX12/FrameGraph/RsrcMngr.h>
 
-#include <UFG/FrameGraph.h>
+#include <UFG/FrameGraph.hpp>
 
 #include <UDX12/_deps/DirectXTK12/DirectXHelpers.h>
 
