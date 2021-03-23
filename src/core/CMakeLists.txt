@@ -1,10 +1,10 @@
 set(c_options_private "")
 if(MSVC)
-  list(APPEND c_options_private "/wd4996")
+  list(APPEND c_options_private "/wd4996;/MP")
 elseif("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
-  list(APPEND c_options_private "")
+  #
 elseif("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
-  list(APPEND c_options_private "")
+  #
 endif()
 
 Ubpa_AddTarget(
