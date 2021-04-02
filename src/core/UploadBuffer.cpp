@@ -83,9 +83,8 @@ void UDX12::UploadBuffer::Delete(ResourceDeleteBatch& deleteBatch) {
 	assert(resource);
 	resource->Unmap(0, nullptr);
 
-	deleteBatch.Add(resource.Get());
+	deleteBatch.Add(std::move(resource));
 
-	resource.Detach();
 	mappedData = nullptr;
 	size = 0;
 }

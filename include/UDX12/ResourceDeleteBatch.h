@@ -7,13 +7,12 @@
 namespace Ubpa::UDX12 {
 	class ResourceDeleteBatch {
 	public:
-		void Add(ID3D12Resource* resource) { resources.push_back(resource); }
+		void Add(Microsoft::WRL::ComPtr<ID3D12Resource> resource) { resources.push_back(std::move(resource)); }
+		void AddCallback(std::function<void()> callback) { callbacks.push_back(std::move(callback)); }
 
-		// add delete resources event to command queue
-		// [async]
-		// - delete resources
-		std::future<void> Commit(ID3D12Device* device, ID3D12CommandQueue*);
+		std::function<void()> Pack();
 	private:
-		std::vector<ID3D12Resource*> resources;
+		std::vector<Microsoft::WRL::ComPtr<ID3D12Resource>> resources;
+		std::vector<std::function<void()>> callbacks;
 	};
 }
