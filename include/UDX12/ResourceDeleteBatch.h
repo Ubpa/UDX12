@@ -2,17 +2,22 @@
 
 #include "Util.h"
 
-#include <future>
+#include <UFunction.hpp>
 
 namespace Ubpa::UDX12 {
 	class ResourceDeleteBatch {
 	public:
-		void Add(Microsoft::WRL::ComPtr<ID3D12Resource> resource) { resources.push_back(std::move(resource)); }
-		void AddCallback(std::function<void()> callback) { callbacks.push_back(std::move(callback)); }
-
-		std::function<void()> Pack();
+		ResourceDeleteBatch() = default;
+		ResourceDeleteBatch(const ResourceDeleteBatch&) = delete;
+		ResourceDeleteBatch(ResourceDeleteBatch&&) noexcept = default;
+		ResourceDeleteBatch& operator=(const ResourceDeleteBatch&) = delete;
+		ResourceDeleteBatch& operator=(ResourceDeleteBatch&&) noexcept = default;
+		~ResourceDeleteBatch();
+		void Add(Microsoft::WRL::ComPtr<ID3D12Resource> resource);
+		void AddCallback(unique_function<void()> callback);
+		void Release();
 	private:
 		std::vector<Microsoft::WRL::ComPtr<ID3D12Resource>> resources;
-		std::vector<std::function<void()>> callbacks;
+		std::vector<unique_function<void()>> callbacks;
 	};
 }

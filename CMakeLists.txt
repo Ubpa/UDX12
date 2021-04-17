@@ -16,6 +16,7 @@ Ubpa_DownloadZip(
 
 Ubpa_AddDep(UTemplate 0.7.2)
 Ubpa_AddDep(UFG 0.4.0)
+Ubpa_AddDep(UFunction 0.1.0)
 
 Ubpa_AddSubDirsRec(include)
 Ubpa_AddSubDirsRec(src)

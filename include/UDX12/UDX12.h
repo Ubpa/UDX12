@@ -15,5 +15,6 @@
 #include "FrameResourceMngr.h"
 #include "GCmdList.h"
 #include "MeshGPUBuffer.h"
+#include "ResourceDeleteBatch.h"
 #include "UploadBuffer.h"
 #include "Util.h"

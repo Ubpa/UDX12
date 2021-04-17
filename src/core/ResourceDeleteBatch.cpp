@@ -2,10 +2,15 @@
 
 using namespace Ubpa;
 
-std::function<void()> UDX12::ResourceDeleteBatch::Pack() {
-	return [resources = std::move(resources), callbacks = std::move(callbacks)]() mutable {
-		resources.clear();
-		for (const auto& callback : callbacks)
-			callback();
-	};
+UDX12::ResourceDeleteBatch::~ResourceDeleteBatch() { Release(); }
+
+void UDX12::ResourceDeleteBatch::Add(Microsoft::WRL::ComPtr<ID3D12Resource> resource) { resources.push_back(std::move(resource)); }
+
+void UDX12::ResourceDeleteBatch::AddCallback(unique_function<void()> callback) { callbacks.push_back(std::move(callback)); }
+
+void UDX12::ResourceDeleteBatch::Release() {
+	resources.clear();
+	for (auto& callback : callbacks)
+		callback();
+	callbacks.clear();
 }

@@ -7,9 +7,7 @@ using namespace Ubpa;
 UDX12::MeshGPUBuffer::MeshGPUBuffer(
 	ID3D12Device* device, DirectX::ResourceUploadBatch& resourceUpload,
 	const void* vb_data, UINT vb_count, UINT vb_stride,
-	const void* ib_data, UINT ib_count, DXGI_FORMAT ib_format
-)
-	:
+	const void* ib_data, UINT ib_count, DXGI_FORMAT ib_format) :
 	isStatic{ true }
 {
 	assert(ib_format == DXGI_FORMAT_R16_UINT || ib_format == DXGI_FORMAT_R32_UINT);
@@ -34,10 +32,11 @@ UDX12::MeshGPUBuffer::MeshGPUBuffer(
 UDX12::MeshGPUBuffer::MeshGPUBuffer(
 	ID3D12Device* device, ID3D12GraphicsCommandList* cmdList,
 	const void* vb_data, UINT vb_count, UINT vb_stride,
-	const void* ib_data, UINT ib_count, DXGI_FORMAT ib_format
-)
+	const void* ib_data, UINT ib_count, DXGI_FORMAT ib_format) :
+	isStatic{ false }
 {
-	ConvertToDynamic(device);
+	vertexUploadBuffer = std::make_unique<DynamicUploadBuffer>(device);
+	indexUploadBuffer = std::make_unique<DynamicUploadBuffer>(device);
 	Update(
 		device, cmdList,
 		vb_data, vb_count, vb_stride,
