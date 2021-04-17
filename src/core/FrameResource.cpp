@@ -7,12 +7,10 @@ void UDX12::FrameResource::Signal(ID3D12CommandQueue* cmdQueue, UINT64 cpuFence)
 	cmdQueue->Signal(gpuFence, cpuFence);
 }
 
-void UDX12::FrameResource::BeginFrame() {
+void UDX12::FrameResource::BeginFrame(HANDLE sharedEventHandle) {
 	if (gpuFence->GetCompletedValue() < cpuFence) {
-		HANDLE eventHandle = CreateEventEx(nullptr, nullptr, false, EVENT_ALL_ACCESS);
-		ThrowIfFailed(gpuFence->SetEventOnCompletion(cpuFence, eventHandle));
-		WaitForSingleObject(eventHandle, INFINITE);
-		CloseHandle(eventHandle);
+		ThrowIfFailed(gpuFence->SetEventOnCompletion(cpuFence, sharedEventHandle));
+		WaitForSingleObject(sharedEventHandle, INFINITE);
     }
 
     for (const auto& name : delayUnregisterResources)

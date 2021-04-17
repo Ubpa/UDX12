@@ -18,9 +18,7 @@ namespace Ubpa::UDX12::FG {
 			return *this;
 		}
 
-		void NewFrame() {
-			passFuncs.clear();
-		}
+		void NewFrame() { passFuncs.clear(); }
 
 		// TODO: parallel
 		void Execute(
