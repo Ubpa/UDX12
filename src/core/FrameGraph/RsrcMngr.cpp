@@ -210,8 +210,8 @@ void RsrcMngr::Construct(ID3D12Device* device, size_t rsrcNodeIdx) {
 		view = importeds.at(rsrcNodeIdx);
 	else {
 		const auto& type = temporals[rsrcNodeIdx];
-		auto& typefrees = pool[type];
-		if (typefrees.empty()) {
+		auto& frees = pool[type];
+		if (frees.empty()) {
 			view.state = D3D12_RESOURCE_STATE_COMMON;
 			RsrcPtr ptr;
 			const auto defaultHeapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
@@ -220,14 +220,14 @@ void RsrcMngr::Construct(ID3D12Device* device, size_t rsrcNodeIdx) {
 				D3D12_HEAP_FLAG_NONE,
 				&type.desc,
 				view.state,
-				&type.clearValue,
+				type.contain_claervalue ? &type.clearvalue : nullptr,
 				IID_PPV_ARGS(ptr.GetAddressOf())));
 			rsrcKeeper.push_back(ptr);
 			view.pRsrc = ptr.Get();
 		}
 		else {
-			view = typefrees.back();
-			typefrees.pop_back();
+			view = frees.back();
+			frees.pop_back();
 		}
 	}
 	actives[rsrcNodeIdx] = view;
@@ -254,13 +254,88 @@ void RsrcMngr::Move(size_t dstRsrcNodeIdx, size_t srcRsrcNodeIdx) {
 	actives.erase(srcRsrcNodeIdx);
 
 	if (IsImported(srcRsrcNodeIdx)) {
-		importeds.emplace(dstRsrcNodeIdx, importeds.at(srcRsrcNodeIdx));
+		auto [iter, success] = importeds.emplace(dstRsrcNodeIdx, importeds.at(srcRsrcNodeIdx));
+		assert(success);
 		importeds.erase(srcRsrcNodeIdx);
 	}
 	else {
-		temporals.emplace(dstRsrcNodeIdx, temporals.at(srcRsrcNodeIdx));
+		auto [iter, success] = temporals.emplace(dstRsrcNodeIdx, temporals.at(srcRsrcNodeIdx));
+		assert(success);
 		temporals.erase(srcRsrcNodeIdx);
 	}
+}
+
+RsrcMngr& RsrcMngr::RegisterTemporalRsrc(size_t rsrcNodeIdx, D3D12_RESOURCE_DESC desc) {
+	auto [iter, success] = temporals.emplace(rsrcNodeIdx, RsrcType{ desc, false });
+	assert(success);
+	return *this;
+}
+
+RsrcMngr& RsrcMngr::RegisterTemporalRsrcAutoClear(size_t rsrcNodeIdx, D3D12_RESOURCE_DESC desc) {
+	bool contain_clearvalue;
+	D3D12_CLEAR_VALUE clearvalue;
+	const float black[4] = { 0,0,0,1 };
+	if (desc.Dimension != D3D12_RESOURCE_DIMENSION_BUFFER
+		&& (desc.Flags & (D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET | D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL)) != 0)
+	{
+		switch (desc.Format)
+		{
+		case DXGI_FORMAT_R32G32B32A32_TYPELESS:
+		case DXGI_FORMAT_R32G32B32_TYPELESS:
+		case DXGI_FORMAT_R16G16B16A16_TYPELESS:
+		case DXGI_FORMAT_R32G32_TYPELESS:
+		case DXGI_FORMAT_R32G8X24_TYPELESS:
+		case DXGI_FORMAT_R32_FLOAT_X8X24_TYPELESS:
+		case DXGI_FORMAT_X32_TYPELESS_G8X24_UINT:
+		case DXGI_FORMAT_R10G10B10A2_TYPELESS:
+		case DXGI_FORMAT_R8G8B8A8_TYPELESS:
+		case DXGI_FORMAT_R16G16_TYPELESS:
+		case DXGI_FORMAT_R32_TYPELESS:
+		case DXGI_FORMAT_R24G8_TYPELESS:
+		case DXGI_FORMAT_R24_UNORM_X8_TYPELESS:
+		case DXGI_FORMAT_X24_TYPELESS_G8_UINT:
+		case DXGI_FORMAT_R8G8_TYPELESS:
+		case DXGI_FORMAT_R16_TYPELESS:
+		case DXGI_FORMAT_R8_TYPELESS:
+		case DXGI_FORMAT_BC1_TYPELESS:
+		case DXGI_FORMAT_BC2_TYPELESS:
+		case DXGI_FORMAT_BC3_TYPELESS:
+		case DXGI_FORMAT_BC4_TYPELESS:
+		case DXGI_FORMAT_BC5_TYPELESS:
+		case DXGI_FORMAT_B8G8R8A8_TYPELESS:
+		case DXGI_FORMAT_B8G8R8X8_TYPELESS:
+		case DXGI_FORMAT_BC6H_TYPELESS:
+		case DXGI_FORMAT_BC7_TYPELESS:
+			contain_clearvalue = false;
+			break;
+		default:
+			contain_clearvalue = true;
+			if(desc.Flags == D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL)
+				clearvalue = CD3DX12_CLEAR_VALUE(desc.Format, 1.f, 0);
+			else
+				clearvalue = CD3DX12_CLEAR_VALUE(desc.Format, black);
+			break;
+		}
+	}
+	else
+		contain_clearvalue = false;
+
+	if (contain_clearvalue) {
+		auto [iter, success] = temporals.emplace(rsrcNodeIdx, RsrcType{ desc, true, clearvalue });
+		assert(success);
+	}
+	else {
+		auto [iter, success] = temporals.emplace(rsrcNodeIdx, RsrcType{ desc, false });
+		assert(success);
+	}
+
+	return *this;
+}
+
+RsrcMngr& RsrcMngr::RegisterTemporalRsrc(size_t rsrcNodeIdx, D3D12_RESOURCE_DESC desc, D3D12_CLEAR_VALUE clearvalue) {
+	auto [iter, success] = temporals.emplace(rsrcNodeIdx, RsrcType{ desc, true, clearvalue });
+	assert(success);
+	return *this;
 }
 
 RsrcMngr& RsrcMngr::RegisterPassRsrcState(size_t passNodeIdx, size_t rsrcNodeIdx, RsrcState state) {
@@ -285,7 +360,8 @@ RsrcMngr& RsrcMngr::RegisterRsrcHandle(
 	size_t rsrcNodeIdx,
 	RsrcImplDesc desc,
 	D3D12_CPU_DESCRIPTOR_HANDLE cpuHandle,
-	D3D12_GPU_DESCRIPTOR_HANDLE gpuHandle)
+	D3D12_GPU_DESCRIPTOR_HANDLE gpuHandle,
+	bool inited)
 {
 	auto& typeinfo = typeinfoMap[rsrcNodeIdx];
 	std::visit([&](const auto& desc) {
@@ -293,43 +369,43 @@ RsrcMngr& RsrcMngr::RegisterRsrcHandle(
 		// CBV
 		if constexpr (std::is_same_v<T, D3D12_CONSTANT_BUFFER_VIEW_DESC>) {
 			assert(gpuHandle.ptr != 0);
-			typeinfo.desc2info_cbv[desc] = { cpuHandle, gpuHandle, true };
+			typeinfo.desc2info_cbv[desc] = { cpuHandle, gpuHandle, inited };
 		}
 		// SRV
 		else if constexpr (std::is_same_v<T, D3D12_SHADER_RESOURCE_VIEW_DESC>) {
 			assert(gpuHandle.ptr != 0);
-			typeinfo.desc2info_srv[desc] = { cpuHandle, gpuHandle, true };
+			typeinfo.desc2info_srv[desc] = { cpuHandle, gpuHandle, inited };
 		}
 		else if constexpr (std::is_same_v<T, RsrcImplDesc_SRV_NULL>) {
 			assert(gpuHandle.ptr != 0);
-			typeinfo.null_info_srv = { cpuHandle, gpuHandle, true };
+			typeinfo.null_info_srv = { cpuHandle, gpuHandle, inited };
 		}
 		// UAV
 		else if constexpr (std::is_same_v<T, D3D12_UNORDERED_ACCESS_VIEW_DESC>) {
 			assert(gpuHandle.ptr != 0);
-			typeinfo.desc2info_uav[desc] = { cpuHandle, gpuHandle, true };
+			typeinfo.desc2info_uav[desc] = { cpuHandle, gpuHandle, inited };
 		}
 		else if constexpr (std::is_same_v<T, RsrcImplDesc_UAV_NULL>) {
 			assert(gpuHandle.ptr != 0);
-			typeinfo.null_info_uav = { cpuHandle, gpuHandle, true };
+			typeinfo.null_info_uav = { cpuHandle, gpuHandle, inited };
 		}
 		// RTV
 		else if constexpr (std::is_same_v<T, D3D12_RENDER_TARGET_VIEW_DESC>) {
 			assert(gpuHandle.ptr == 0);
-			typeinfo.desc2info_rtv[desc] = { cpuHandle,true };
+			typeinfo.desc2info_rtv[desc] = { cpuHandle,inited };
 		}
 		else if constexpr (std::is_same_v<T, RsrcImplDesc_RTV_Null>) {
 			assert(gpuHandle.ptr == 0);
-			typeinfo.null_info_rtv = { cpuHandle,true };
+			typeinfo.null_info_rtv = { cpuHandle,inited };
 		}
 		// DSV
 		else if constexpr (std::is_same_v<T, D3D12_DEPTH_STENCIL_VIEW_DESC>) {
 			assert(gpuHandle.ptr == 0);
-			typeinfo.desc2info_dsv[desc] = { cpuHandle,true };
+			typeinfo.desc2info_dsv[desc] = { cpuHandle,inited };
 		}
 		else if constexpr (std::is_same_v<T, RsrcImplDesc_DSV_Null>) {
 			assert(gpuHandle.ptr == 0);
-			typeinfo.null_info_dsv = { cpuHandle,true };
+			typeinfo.null_info_dsv = { cpuHandle,inited };
 		}
 		else
 			static_assert(always_false_v<T>, "non-exhaustive visitor!");
@@ -519,7 +595,7 @@ PassRsrcs RsrcMngr::RequestPassRsrcs(ID3D12Device* device, ID3D12GraphicsCommand
 				else if constexpr (std::is_same_v<T, D3D12_SHADER_RESOURCE_VIEW_DESC>
 					|| std::is_same_v<T, RsrcImplDesc_SRV_NULL>)
 				{
-					RsrcTypeInfo::CpuGpuInfo* info;
+					RsrcDescInfo::CpuGpuInfo* info;
 					if constexpr (std::is_same_v<T, D3D12_SHADER_RESOURCE_VIEW_DESC>)
 						info = &typeinfo.desc2info_srv.at(desc);
 					else // std::is_same_v<T, RsrcImplDesc_SRV_NULL>
@@ -540,7 +616,7 @@ PassRsrcs RsrcMngr::RequestPassRsrcs(ID3D12Device* device, ID3D12GraphicsCommand
 				else if constexpr (std::is_same_v<T, D3D12_UNORDERED_ACCESS_VIEW_DESC>
 					|| std::is_same_v<T, RsrcImplDesc_UAV_NULL>)
 				{
-					RsrcTypeInfo::CpuGpuInfo* info;
+					RsrcDescInfo::CpuGpuInfo* info;
 					if constexpr (std::is_same_v<T, D3D12_UNORDERED_ACCESS_VIEW_DESC>)
 						info = &typeinfo.desc2info_uav.at(desc);
 					else // std::is_same_v<T, RsrcImplDesc_UAV_NULL>
@@ -561,7 +637,7 @@ PassRsrcs RsrcMngr::RequestPassRsrcs(ID3D12Device* device, ID3D12GraphicsCommand
 				else if constexpr (std::is_same_v<T, D3D12_RENDER_TARGET_VIEW_DESC>
 					|| std::is_same_v<T, RsrcImplDesc_RTV_Null>)
 				{
-					RsrcTypeInfo::CpuInfo* info;
+					RsrcDescInfo::CpuInfo* info;
 					if constexpr (std::is_same_v<T, D3D12_RENDER_TARGET_VIEW_DESC>)
 						info = &typeinfo.desc2info_rtv.at(desc);
 					else // std::is_same_v<T, RsrcImplDesc_RTV_NULL>
@@ -582,7 +658,7 @@ PassRsrcs RsrcMngr::RequestPassRsrcs(ID3D12Device* device, ID3D12GraphicsCommand
 				else if constexpr (std::is_same_v<T, D3D12_DEPTH_STENCIL_VIEW_DESC>
 					|| std::is_same_v<T, RsrcImplDesc_DSV_Null>)
 				{
-					RsrcTypeInfo::CpuInfo* info;
+					RsrcDescInfo::CpuInfo* info;
 					if constexpr (std::is_same_v<T, D3D12_DEPTH_STENCIL_VIEW_DESC>)
 						info = &typeinfo.desc2info_dsv.at(desc);
 					else // std::is_same_v<T, RsrcImplDesc_RTV_NULL>

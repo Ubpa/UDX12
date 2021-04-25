@@ -62,10 +62,9 @@ namespace Ubpa::UDX12::FG {
 		}
 
 		// mark the resource node as temporal
-		RsrcMngr& RegisterTemporalRsrc(size_t rsrcNodeIdx, RsrcType type) {
-			temporals[rsrcNodeIdx] = type;
-			return *this;
-		}
+		RsrcMngr& RegisterTemporalRsrc(size_t rsrcNodeIdx, D3D12_RESOURCE_DESC type);
+		RsrcMngr& RegisterTemporalRsrcAutoClear(size_t rsrcNodeIdx, D3D12_RESOURCE_DESC type);
+		RsrcMngr& RegisterTemporalRsrc(size_t rsrcNodeIdx, D3D12_RESOURCE_DESC type, D3D12_CLEAR_VALUE clearvalue);
 
 		// provide details for the resource node of the pass node
 		RsrcMngr& RegisterPassRsrcState(size_t passNodeIdx, size_t rsrcNodeIdx, RsrcState state);
@@ -79,7 +78,8 @@ namespace Ubpa::UDX12::FG {
 			size_t rsrcNodeIdx,
 			RsrcImplDesc desc,
 			D3D12_CPU_DESCRIPTOR_HANDLE cpuHandle,
-			D3D12_GPU_DESCRIPTOR_HANDLE gpuHandle = { 0 }
+			D3D12_GPU_DESCRIPTOR_HANDLE gpuHandle = { 0 },
+			bool inited = true
 		);
 
 		// only support CBV, SRV, UAV
@@ -103,9 +103,24 @@ namespace Ubpa::UDX12::FG {
 		void DsvDHReserve(UINT num);
 		void RtvDHReserve(UINT num);
 
+		struct RsrcType {
+			D3D12_RESOURCE_DESC desc;
+			bool contain_claervalue;
+			D3D12_CLEAR_VALUE clearvalue;
+			bool operator==(const RsrcType& rhs) const noexcept {
+				return desc == rhs.desc && contain_claervalue == rhs.contain_claervalue
+					&& (contain_claervalue?clearvalue == rhs.clearvalue:true);
+			}
+		};
+		struct RsrcTypeHasher {
+			bool operator()(const RsrcType& rsrctype) const noexcept {
+				return Ubpa::UDX12::FG::detail::hash_of(rsrctype);
+			}
+		};
+
 		// type -> vector<view>
 		std::vector<RsrcPtr> rsrcKeeper;
-		std::unordered_map<RsrcType, std::vector<SRsrcView>> pool;
+		std::unordered_map<RsrcType, std::vector<SRsrcView>, RsrcTypeHasher> pool;
 
 		// rsrcNodeIdx -> view
 		std::unordered_map<size_t, SRsrcView> importeds;
@@ -120,7 +135,7 @@ namespace Ubpa::UDX12::FG {
 		std::unordered_map<size_t, SRsrcView> actives;
 
 		// rsrcNodeIdx -> typeinfo
-		std::unordered_map<size_t, RsrcTypeInfo> typeinfoMap;
+		std::unordered_map<size_t, RsrcDescInfo> typeinfoMap;
 		
 		UDX12::DynamicSuballocMngr* csuDynamicDH{ nullptr };
 

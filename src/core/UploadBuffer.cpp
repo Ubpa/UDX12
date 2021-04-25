@@ -91,7 +91,7 @@ void UDX12::UploadBuffer::Delete(ResourceDeleteBatch& deleteBatch) {
 
 // ==================================================
 
-UDX12::DynamicUploadBuffer::DynamicUploadBuffer(ID3D12Device* device, D3D12_RESOURCE_FLAGS flag)
+UDX12::DynamicUploadBuffer::DynamicUploadBuffer(ID3D12Device* device, D3D12_RESOURCE_FLAGS flag) noexcept
     : device{ device }, flag{ flag }{}
 
 UDX12::DynamicUploadBuffer::DynamicUploadBuffer(ID3D12Device* device, UINT64 size, D3D12_RESOURCE_FLAGS flag)

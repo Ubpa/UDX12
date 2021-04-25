@@ -66,7 +66,7 @@ namespace Ubpa::UDX12 {
 
 	class DynamicUploadBuffer {
 	public:
-		DynamicUploadBuffer(ID3D12Device* device, D3D12_RESOURCE_FLAGS flag = D3D12_RESOURCE_FLAG_NONE);
+		DynamicUploadBuffer(ID3D12Device* device, D3D12_RESOURCE_FLAGS flag = D3D12_RESOURCE_FLAG_NONE) noexcept;
 		DynamicUploadBuffer(ID3D12Device* device, UINT64 size, D3D12_RESOURCE_FLAGS flag = D3D12_RESOURCE_FLAG_NONE);
 
 		ID3D12Resource* GetResource() const noexcept;

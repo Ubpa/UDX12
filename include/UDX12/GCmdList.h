@@ -20,7 +20,7 @@ namespace Ubpa::UDX12 {
         // D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER
         template<typename... Heaps,
             typename = std::enable_if_t<
-            sizeof...(Heaps) < static_cast<SIZE_T>(2) &&
+            sizeof...(Heaps) <= static_cast<size_t>(2) &&
             (std::is_same_v<Heaps, ID3D12DescriptorHeap>&&...) >>
         void SetDescriptorHeaps(Heaps*... heaps);
 
