@@ -84,6 +84,8 @@ namespace Ubpa::UDX12 {
 		// - delete vertexUploadBuffer, indexUploadBuffer, staticVertexBuffer, staticIndexBuffer
 		void Delete(ResourceDeleteBatch& deleteBatch);
 
+		ComPtr<ID3D12Resource> GetVertexBufferResource() const { return staticVertexBuffer; }
+
 	private:
 		bool isStatic;
 
