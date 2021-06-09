@@ -114,7 +114,8 @@ namespace Ubpa::UDX12::Util {
 		const D3D_SHADER_MACRO* defines,
 		const std::string& entrypoint,
 		const std::string& target,
-        D3DInclude* pInclude
+        D3DInclude* pInclude,
+        LPCSTR pSourceName = nullptr
 	);
 
 	HRESULT __cdecl CreateTexture2DArrayFromMemory(_In_ ID3D12Device* device,
@@ -126,4 +127,6 @@ namespace Ubpa::UDX12::Util {
 		bool generateMips = false,
 		D3D12_RESOURCE_STATES afterState = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
 		D3D12_RESOURCE_FLAGS resFlags = D3D12_RESOURCE_FLAG_NONE) noexcept;
+
+    ComPtr<ID3DBlob> CompileLibrary(LPCVOID pText, UINT32 size, LPCWSTR pSourceName);
 }

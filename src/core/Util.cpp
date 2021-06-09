@@ -11,8 +11,12 @@
 #include <fstream>
 #include <sstream>
 
+#include "dxcapi.use.h"
+
 using namespace Ubpa::UDX12;
 using namespace std;
+
+static dxc::DxcDllSupport gDxcDllHelper;
 
 wstring Util::AnsiToWString(const string& str)
 {
@@ -157,7 +161,8 @@ ComPtr<ID3DBlob> Util::CompileShader(
     const D3D_SHADER_MACRO* defines,
     const std::string& entrypoint,
 	const std::string& target,
-	D3DInclude* pInclude
+	D3DInclude* pInclude,
+    LPCSTR pSourceName
 ) {
 	UINT compileFlags = 0;
 #if defined(DEBUG) || defined(_DEBUG)  
@@ -168,7 +173,7 @@ ComPtr<ID3DBlob> Util::CompileShader(
 
 	ComPtr<ID3DBlob> byteCode;
 	ComPtr<ID3DBlob> errors;
-    hr = D3DCompile(source.data(), source.size(), nullptr, defines, pInclude,
+    hr = D3DCompile(source.data(), source.size(), pSourceName, defines, pInclude,
 		entrypoint.c_str(), target.c_str(), compileFlags, 0, &byteCode, &errors);
 
 	if (errors != nullptr)
@@ -269,4 +274,39 @@ HRESULT Util::CreateTexture2DArrayFromMemory(ID3D12Device* device,
 	*texture = res.Detach();
 
 	return S_OK;
+}
+
+ComPtr<ID3DBlob> Util::CompileLibrary(LPCVOID pText, UINT32 size, LPCWSTR pSourceName) {
+    // Initialize the helper
+    ThrowIfFailed(gDxcDllHelper.Initialize());
+    Microsoft::WRL::ComPtr<IDxcCompiler> pCompiler;
+    Microsoft::WRL::ComPtr<IDxcLibrary> pLibrary;
+
+    ThrowIfFailed(gDxcDllHelper.CreateInstance(CLSID_DxcCompiler, pCompiler.GetAddressOf()));
+    ThrowIfFailed(gDxcDllHelper.CreateInstance(CLSID_DxcLibrary, pLibrary.GetAddressOf()));
+
+    // Create blob from the string
+    Microsoft::WRL::ComPtr<IDxcBlobEncoding> pTextBlob;
+    ThrowIfFailed(pLibrary->CreateBlobWithEncodingFromPinned(pText, size, 0, &pTextBlob));
+
+    // Compile
+    Microsoft::WRL::ComPtr<IDxcOperationResult> pResult;
+    ThrowIfFailed(pCompiler->Compile(pTextBlob.Get(), pSourceName, L"", L"lib_6_3", nullptr, 0, nullptr, 0, nullptr, &pResult));
+
+    // Verify the result
+    HRESULT resultCode;
+    ThrowIfFailed(pResult->GetStatus(&resultCode));
+    if (FAILED(resultCode))
+    {
+        Microsoft::WRL::ComPtr<IDxcBlobEncoding> pError;
+        ThrowIfFailed(pResult->GetErrorBuffer(&pError));
+        OutputDebugStringA((char*)pError->GetBufferPointer());
+        return nullptr;
+    }
+
+    Microsoft::WRL::ComPtr<IDxcBlob> pBlob;
+    ThrowIfFailed(pResult->GetResult(&pBlob));
+    Microsoft::WRL::ComPtr<ID3DBlob> pRstBlob;
+    ThrowIfFailed(pBlob->QueryInterface(IID_PPV_ARGS(&pRstBlob)));
+    return pRstBlob;
 }
