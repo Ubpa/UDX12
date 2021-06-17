@@ -30,7 +30,7 @@ UDX12::UploadBuffer::~UploadBuffer() {
 void UDX12::UploadBuffer::Set(UINT64 offset, const void* data, UINT64 size) {
     assert(size > 0 && data);
     assert(offset + size <= Size());
-    memcpy(mappedData + offset, data, size);
+    memcpy((std::uint8_t*)mappedData + offset, data, size);
 }
 
 void UDX12::UploadBuffer::CopyConstruct(
@@ -91,18 +91,19 @@ void UDX12::UploadBuffer::Delete(ResourceDeleteBatch& deleteBatch) {
 
 // ==================================================
 
-UDX12::DynamicUploadBuffer::DynamicUploadBuffer(ID3D12Device* device, D3D12_RESOURCE_FLAGS flag) noexcept
-    : device{ device }, flag{ flag }{}
-
 UDX12::DynamicUploadBuffer::DynamicUploadBuffer(ID3D12Device* device, UINT64 size, D3D12_RESOURCE_FLAGS flag)
 	: device{ device }, flag{ flag }
 {
-	assert(size > 0);
-	buffer = std::make_unique<UDX12::UploadBuffer>(device, size, flag);
+	if(size > 0)
+		buffer = std::make_unique<UDX12::UploadBuffer>(device, size, flag);
 }
 
 ID3D12Resource* UDX12::DynamicUploadBuffer::GetResource() const noexcept {
     return buffer ? buffer->GetResource() : nullptr;
+}
+
+void* UDX12::DynamicUploadBuffer::GetMappedData() const noexcept {
+	return buffer ? buffer->GetMappedData() : nullptr;
 }
 
 UINT64 UDX12::DynamicUploadBuffer::Size() const noexcept {
@@ -118,6 +119,14 @@ void UDX12::DynamicUploadBuffer::Reserve(size_t size) {
         newBuffer->Set(0, buffer->GetMappedData(), buffer->Size());
 
     buffer = std::move(newBuffer);
+}
+
+void UDX12::DynamicUploadBuffer::Resize(size_t size) {
+	auto newBuffer = std::make_unique<UDX12::UploadBuffer>(device, size, flag);
+	if (buffer)
+		newBuffer->Set(0, buffer->GetMappedData(), std::min(size, buffer->Size()));
+
+	buffer = std::move(newBuffer);
 }
 
 void UDX12::DynamicUploadBuffer::FastReserve(size_t size) {

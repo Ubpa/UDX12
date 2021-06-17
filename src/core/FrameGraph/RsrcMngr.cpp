@@ -30,10 +30,31 @@ RsrcMngr::~RsrcMngr() {
 }
 
 void RsrcMngr::NewFrame() {
+	for (auto& [type, rsrcs] : pool) {
+		rsrcs.erase(std::remove_if(rsrcs.begin(), rsrcs.end(), [&](const auto& rsrc) {
+			if (!usedRsrcs.contains(rsrc.pRsrc)) {
+				rsrcKeeper.erase(rsrc.pRsrc);
+				return true;
+			}
+			else
+				return false;
+		}), rsrcs.end());
+	}
+	{ // clear empty type -> rsrc vector
+		auto iter = pool.begin();
+		while (iter != pool.end()) {
+			if (iter->second.empty())
+				iter = pool.erase(iter);
+			else
+				++iter;
+		}
+	}
+
 	importeds.clear();
 	temporals.clear();
 	passNodeIdx2rsrcMap.clear();
 	actives.clear();
+	usedRsrcs.clear();
 
 	for (const auto& idx : csuDHused)
 		csuDHfree.push_back(idx);
@@ -156,7 +177,7 @@ void RsrcMngr::DHReserve() {
 						record.descs_rtv.insert(desc);
 						numRTV++;
 					}
-					// DTV
+					// DSV
 					else if constexpr (std::is_same_v<T, D3D12_DEPTH_STENCIL_VIEW_DESC>) {
 						if (record.descs_dsv.find(desc) != record.descs_dsv.end())
 							return;
@@ -222,13 +243,14 @@ void RsrcMngr::Construct(ID3D12Device* device, size_t rsrcNodeIdx) {
 				view.state,
 				type.contain_claervalue ? &type.clearvalue : nullptr,
 				IID_PPV_ARGS(ptr.GetAddressOf())));
-			rsrcKeeper.push_back(ptr);
+			rsrcKeeper.emplace(ptr.Get(), ptr);
 			view.pRsrc = ptr.Get();
 		}
 		else {
 			view = frees.back();
 			frees.pop_back();
 		}
+		usedRsrcs.insert(view.pRsrc);
 	}
 	actives[rsrcNodeIdx] = view;
 }

@@ -45,7 +45,7 @@ void Executor::Execute(
 			rsrcMngr.Construct(device, rsrc);
 
 		auto passRsrcs = rsrcMngr.RequestPassRsrcs(device, cmdList.Get(), passNodeIdx);
-		passFuncs.find(passNodeIdx)->second(cmdList.Get(), passRsrcs);
+		passFuncs.at(passNodeIdx)(cmdList.Get(), passRsrcs);
 
 		for (const auto& rsrc : passinfo.destructRsrcs)
 			rsrcMngr.Destruct(cmdList.Get(), rsrc);

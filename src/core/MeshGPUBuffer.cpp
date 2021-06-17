@@ -35,8 +35,8 @@ UDX12::MeshGPUBuffer::MeshGPUBuffer(
 	const void* ib_data, UINT ib_count, DXGI_FORMAT ib_format) :
 	isStatic{ false }
 {
-	vertexUploadBuffer = std::make_unique<DynamicUploadBuffer>(device);
-	indexUploadBuffer = std::make_unique<DynamicUploadBuffer>(device);
+	vertexUploadBuffer = std::make_unique<DynamicUploadBuffer>(device, 0);
+	indexUploadBuffer = std::make_unique<DynamicUploadBuffer>(device, 0);
 	Update(
 		device, cmdList,
 		vb_data, vb_count, vb_stride,
@@ -94,8 +94,8 @@ void UDX12::MeshGPUBuffer::ConvertToStatic(ResourceDeleteBatch& deleteBatch) {
 void UDX12::MeshGPUBuffer::ConvertToDynamic(ID3D12Device* device) {
 	assert(IsStatic());
 	isStatic = false;
-	vertexUploadBuffer = std::make_unique<DynamicUploadBuffer>(device);
-	indexUploadBuffer = std::make_unique<DynamicUploadBuffer>(device);
+	vertexUploadBuffer = std::make_unique<DynamicUploadBuffer>(device, 0);
+	indexUploadBuffer = std::make_unique<DynamicUploadBuffer>(device, 0);
 }
 
 void UDX12::MeshGPUBuffer::Delete(ResourceDeleteBatch& deleteBatch) {

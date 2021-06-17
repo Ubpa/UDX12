@@ -119,8 +119,9 @@ namespace Ubpa::UDX12::FG {
 		};
 
 		// type -> vector<view>
-		std::vector<RsrcPtr> rsrcKeeper;
+		std::unordered_map<Rsrc*, RsrcPtr> rsrcKeeper;
 		std::unordered_map<RsrcType, std::vector<SRsrcView>, RsrcTypeHasher> pool;
+		std::unordered_set<Rsrc*> usedRsrcs;
 
 		// rsrcNodeIdx -> view
 		std::unordered_map<size_t, SRsrcView> importeds;
