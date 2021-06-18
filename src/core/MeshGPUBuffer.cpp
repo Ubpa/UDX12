@@ -106,10 +106,8 @@ void UDX12::MeshGPUBuffer::Delete(ResourceDeleteBatch& deleteBatch) {
 		indexUploadBuffer.reset();
 	}
 
-	deleteBatch.Add(staticVertexBuffer.Get());
-	deleteBatch.Add(staticIndexBuffer.Get());
-	staticVertexBuffer.Detach();
-	staticIndexBuffer.Detach();
+	deleteBatch.Add(std::move(staticVertexBuffer));
+	deleteBatch.Add(std::move(staticIndexBuffer));
 }
 
 D3D12_VERTEX_BUFFER_VIEW UDX12::MeshGPUBuffer::VertexBufferView() const {
