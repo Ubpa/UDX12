@@ -11,7 +11,7 @@ using namespace std;
 
 #include <DirectXColors.h>
 
-RsrcMngr::RsrcMngr() {
+RsrcMngr::RsrcMngr(ID3D12Device* device) : device{ device } {
 	csuDynamicDH = new DynamicSuballocMngr{
 		DescriptorHeapMngr::Instance().GetCSUGpuDH(),
 		256,
@@ -224,7 +224,7 @@ void RsrcMngr::DHReserve() {
 	DsvDHReserve(numDSV);
 }
 
-void RsrcMngr::Construct(ID3D12Device* device, size_t rsrcNodeIdx) {
+void RsrcMngr::Construct(size_t rsrcNodeIdx) {
 	SRsrcView view;
 
 	if (IsImported(rsrcNodeIdx))
@@ -255,11 +255,23 @@ void RsrcMngr::Construct(ID3D12Device* device, size_t rsrcNodeIdx) {
 	actives[rsrcNodeIdx] = view;
 }
 
-void RsrcMngr::Destruct(ID3D12GraphicsCommandList* cmdList, size_t rsrcNodeIdx) {
+void RsrcMngr::DestructCPU(size_t rsrcNodeIdx) {
 	auto view = actives.at(rsrcNodeIdx);
 	if (!IsImported(rsrcNodeIdx))
 		pool[temporals.at(rsrcNodeIdx)].push_back(view);
+	/* // run in GPU timeline
 	else {
+		auto orig_state = importeds.at(rsrcNodeIdx).state;
+		if (view.state != orig_state)
+			DirectX::TransitionResource(cmdList, view.pRsrc, view.state, orig_state);
+	}
+	actives.erase(rsrcNodeIdx);
+	*/
+}
+
+void RsrcMngr::DestructGPU(ID3D12GraphicsCommandList* cmdList, size_t rsrcNodeIdx) {
+	auto view = actives.at(rsrcNodeIdx);
+	if (IsImported(rsrcNodeIdx)) {
 		auto orig_state = importeds.at(rsrcNodeIdx).state;
 		if (view.state != orig_state)
 			DirectX::TransitionResource(cmdList, view.pRsrc, view.state, orig_state);
@@ -581,7 +593,7 @@ void RsrcMngr::AllocateHandle() {
 	}
 }
 
-PassRsrcs RsrcMngr::RequestPassRsrcs(ID3D12Device* device, ID3D12GraphicsCommandList* cmdList, size_t passNodeIdx) {
+PassRsrcs RsrcMngr::RequestPassRsrcs(ID3D12GraphicsCommandList* cmdList, size_t passNodeIdx) {
 	PassRsrcs passRsrc;
 	const auto& rsrcMap = passNodeIdx2rsrcMap.at(passNodeIdx);
 	for (const auto& [rsrcNodeIdx, state_descs] : rsrcMap) {
@@ -702,7 +714,7 @@ PassRsrcs RsrcMngr::RequestPassRsrcs(ID3D12Device* device, ID3D12GraphicsCommand
 					static_assert(always_false_v<T>, "non-exhaustive visitor!");
 			}, desc);
 		}
-		passRsrc.emplace(rsrcNodeIdx, RsrcImpl{ view.pRsrc, typeinfo });
+		passRsrc.emplace(rsrcNodeIdx, RsrcImpl{ view.pRsrc, &typeinfo });
 	}
 	return passRsrc;
 }
@@ -712,8 +724,7 @@ bool RsrcMngr::CheckComplete(const UFG::FrameGraph& fg) {
 	size_t passNodeNum = fg.GetPassNodes().size();
 
 	for (size_t i = 0; i < rsrcNodeNum; i++) {
-		if (importeds.find(i) == importeds.end()
-			&& temporals.find(i) == temporals.end())
+		if (!importeds.contains(i) && !temporals.contains(i) && !fg.IsMovedIn(i))
 			return false;
 	}
 
@@ -721,9 +732,14 @@ bool RsrcMngr::CheckComplete(const UFG::FrameGraph& fg) {
 		auto target = passNodeIdx2rsrcMap.find(i);
 		if (target == passNodeIdx2rsrcMap.end())
 			return false;
-		const auto& passNode = fg.GetPassNodes().at(i);
+		const auto& rsrcMap = target->second;
+		const auto& passNode = fg.GetPassNodes()[i];
 		for (auto rsrcNodeIdx : passNode.Inputs()) {
-			if (target->second.find(rsrcNodeIdx) == target->second.end())
+			if (!rsrcMap.contains(rsrcNodeIdx))
+				return false;
+		}
+		for (auto rsrcNodeIdx : passNode.Outputs()) {
+			if (!rsrcMap.contains(rsrcNodeIdx))
 				return false;
 		}
 	}

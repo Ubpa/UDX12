@@ -551,7 +551,7 @@ namespace Ubpa::UDX12::FG {
 	};
 	struct RsrcImpl {
 		ID3D12Resource* resource;
-		const RsrcDescInfo& info;
+		const RsrcDescInfo* info;
 	};
 	using PassRsrcs = std::unordered_map<size_t, RsrcImpl>;
 }

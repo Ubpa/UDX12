@@ -21,6 +21,7 @@ Ubpa_AddTarget(
     Ubpa::UTemplate_core
     Ubpa::UFG_core
     Ubpa::UFunction_core
+    Ubpa::UThreadPool_core
   LIB_INTERFACE
     d3dcompiler.lib
     D3D12.lib
