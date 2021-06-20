@@ -64,49 +64,57 @@ void Executor::Execute(
 		}
 	}
 
-	for (auto pass : crst.sorted_passes) {
-		const auto& passInfo = crst.pass2info.at(pass);
-		for (auto rsrc : passInfo.construct_resources)
-			rsrcMngr.Construct(rsrc);
+	{
+		// let worker threads wait for the main thread
+		std::lock_guard<std::mutex> guard(mutex_rsrcMngr);
+		for (auto pass : crst.sorted_passes) {
+			const auto& passInfo = crst.pass2info.at(pass);
+			for (auto rsrc : passInfo.construct_resources)
+				rsrcMngr.Construct(rsrc);
 
-		auto passRsrcs = rsrcMngr.RequestPassRsrcs(cmdlists[pass], pass);
+			auto passRsrcs = rsrcMngr.RequestPassRsrcs(cmdlists[pass], pass);
 
-		for (auto rsrc : passInfo.move_resources) {
-			auto src = rsrc;
-			auto dst = crst.moves_src2dst.at(src);
-			rsrcMngr.Move(dst, src);
-		}
+			for (auto rsrc : passInfo.move_resources) {
+				auto src = rsrc;
+				auto dst = crst.moves_src2dst.at(src);
+				rsrcMngr.Move(dst, src);
+			}
 
-		for (auto rsrc : passInfo.destruct_resources)
-			rsrcMngr.DestructCPU(rsrc);
+			for (auto rsrc : passInfo.destruct_resources)
+				rsrcMngr.DestructCPU(rsrc);
 
-		if (auto target = passFuncs.find(pass); target != passFuncs.end()) {
-			threadpool.Enqueue(
-				[
-					rsrcs = std::move(passRsrcs), cmdlist = cmdlists[pass], func = std::move(target->second), pass, cmdlist_num,
-					&crst, &mutex_cnt, &cnt, &cv_cnt, &rsrcMngr, &mutex_rsrcMngr
-				]
-				() {
-					func(cmdlist, rsrcs);
+			if (auto target = passFuncs.find(pass); target != passFuncs.end()) {
+				threadpool.Enqueue(
+					[
+						rsrcs = std::move(passRsrcs), cmdlist = cmdlists[pass], func = std::move(target->second), pass, cmdlist_num,
+						&crst, &mutex_cnt, &cnt, &cv_cnt, &rsrcMngr, &mutex_rsrcMngr
+					]
+					() {
+						func(cmdlist, rsrcs);
 
-					{
-						std::lock_guard<std::mutex> guard(mutex_rsrcMngr);
-						for (auto rsrc : crst.pass2info.at(pass).destruct_resources)
-							rsrcMngr.DestructGPU(cmdlist, rsrc);
+						const auto& passinfo = crst.pass2info.at(pass);
+						if (!passinfo.destruct_resources.empty()) {
+							// 1. wait main thread
+							// 2. avoid data race with other worker threads
+							std::lock_guard<std::mutex> guard(mutex_rsrcMngr);
+							for (auto rsrc : passinfo.destruct_resources)
+								rsrcMngr.DestructGPU(cmdlist, rsrc);
+						}
+
+						cmdlist->Close();
+
+						{ // add cnt
+							std::lock_guard<std::mutex> lk(mutex_cnt);
+							++cnt;
+							if (cnt == cmdlist_num)
+								cv_cnt.notify_one();
+						}
 					}
-
-					cmdlist->Close();
-
-					{ // add cnt
-						std::lock_guard<std::mutex> lk(mutex_cnt);
-						++cnt;
-						if (cnt == cmdlist_num)
-							cv_cnt.notify_one();
-					}
-				}
-			);
+				);
+			}
 		}
 	}
+	
 
 	{
 		std::unique_lock<std::mutex> lk(mutex_cnt);
