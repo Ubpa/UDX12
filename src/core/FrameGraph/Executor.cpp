@@ -127,7 +127,7 @@ void Executor::Execute(
 			assert(cnt == cmdlist_num);
 		}
 	}
-	cmdQueue->ExecuteCommandLists(cmdlists.size(), (ID3D12CommandList* const*)cmdlists.data());
+	cmdQueue->ExecuteCommandLists((UINT)cmdlists.size(), (ID3D12CommandList* const*)cmdlists.data());
 	for (auto* cmdlist : cmdlists)
 		cmdlist->Release();
 }

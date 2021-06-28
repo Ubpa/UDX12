@@ -22,7 +22,7 @@ Ubpa_DownloadZip_Pro(
 )
 
 Ubpa_AddDep(UTemplate 0.7.2)
-Ubpa_AddDep(UFG 0.5.0)
+Ubpa_AddDep(UFG 0.5.1)
 Ubpa_AddDep(UThreadPool 0.1.0)
 
 Ubpa_AddSubDirsRec(include)

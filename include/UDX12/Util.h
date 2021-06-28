@@ -2,6 +2,7 @@
 
 #include "_deps/d3dx12.h"
 #include "_deps/DirectXTK12/ResourceUploadBatch.h"
+#include "dxcapi.h"
 
 #include <d3dcompiler.h>
 #include <wrl.h>
@@ -12,13 +13,15 @@
 #include <cassert>
 
 #ifndef ThrowIfFailed
-#define ThrowIfFailed(x)                                                               \
-{                                                                                      \
-    HRESULT hr__ = (x);                                                                \
-    std::wstring wfn = Ubpa::UDX12::Util::AnsiToWString(__FILE__);                     \
-    if(FAILED(hr__)) { throw Ubpa::UDX12::Util::Exception(hr__, L#x, wfn, __LINE__); } \
+#define ThrowIfFailed(x)                                                          \
+{                                                                                 \
+    HRESULT hr__ = (x);                                                           \
+    if(FAILED(hr__)) {                                                            \
+         std::wstring wfn = Ubpa::UDX12::Util::AnsiToWString(__FILE__);           \
+         throw Ubpa::UDX12::Util::Exception(hr__, L#x, std::move(wfn), __LINE__); \
+    }                                                                             \
 }
-#endif
+#endif // !ThrowIfFailed
 
 namespace Ubpa::UDX12 {
     using Microsoft::WRL::ComPtr;
@@ -128,5 +131,9 @@ namespace Ubpa::UDX12::Util {
 		D3D12_RESOURCE_STATES afterState = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
 		D3D12_RESOURCE_FLAGS resFlags = D3D12_RESOURCE_FLAG_NONE) noexcept;
 
-    ComPtr<ID3DBlob> CompileLibrary(LPCVOID pText, UINT32 size, LPCWSTR pSourceName);
+    ComPtr<ID3DBlob> CompileLibrary(
+        LPCVOID pText,
+        UINT32 size,
+        LPCWSTR dir = nullptr,
+        LPCWSTR pSourceName = nullptr);
 }

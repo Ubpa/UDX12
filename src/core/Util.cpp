@@ -10,6 +10,7 @@
 
 #include <fstream>
 #include <sstream>
+#include <filesystem>
 
 #include "dxcapi.use.h"
 
@@ -276,7 +277,7 @@ HRESULT Util::CreateTexture2DArrayFromMemory(ID3D12Device* device,
 	return S_OK;
 }
 
-ComPtr<ID3DBlob> Util::CompileLibrary(LPCVOID pText, UINT32 size, LPCWSTR pSourceName) {
+ComPtr<ID3DBlob> Util::CompileLibrary(LPCVOID pText, UINT32 size, LPCWSTR dir, LPCWSTR pSourceName) {
     // Initialize the helper
     ThrowIfFailed(gDxcDllHelper.Initialize());
     Microsoft::WRL::ComPtr<IDxcCompiler> pCompiler;
@@ -291,7 +292,14 @@ ComPtr<ID3DBlob> Util::CompileLibrary(LPCVOID pText, UINT32 size, LPCWSTR pSourc
 
     // Compile
     Microsoft::WRL::ComPtr<IDxcOperationResult> pResult;
-    ThrowIfFailed(pCompiler->Compile(pTextBlob.Get(), pSourceName, L"", L"lib_6_3", nullptr, 0, nullptr, 0, nullptr, &pResult));
+    IDxcIncludeHandler* inc = nullptr;
+    if (dir)
+        inc = DxcInclude::New(pLibrary, std::filesystem::path(dir).string());
+    ThrowIfFailed(pCompiler->Compile(pTextBlob.Get(), pSourceName, L"", L"lib_6_3", nullptr, 0, nullptr, 0, inc, &pResult));
+    if (inc) {
+        inc->Release();
+        inc = nullptr;
+    }
 
     // Verify the result
     HRESULT resultCode;
