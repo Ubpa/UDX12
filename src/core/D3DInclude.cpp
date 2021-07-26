@@ -105,7 +105,7 @@ HRESULT __stdcall Ubpa::UDX12::DxcInclude::LoadSource(
 			includeFile.close();
 
 			IDxcBlobEncoding* blob = nullptr;
-			lib->CreateBlobWithEncodingFromPinned(buf, fileSize, 0, &blob);
+			lib->CreateBlobWithEncodingFromPinned(buf, (UINT32)fileSize, 0, &blob);
 			*ppIncludeSource = blob;
 			buffers.push_back(buf);
 		}
