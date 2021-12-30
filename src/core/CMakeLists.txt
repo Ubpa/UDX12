@@ -20,7 +20,6 @@ Ubpa_AddTarget(
   LIB
     Ubpa::UTemplate_core
     Ubpa::UFG_core
-    Ubpa::UFunction_core
     Ubpa::UThreadPool_core
   LIB_INTERFACE
     d3dcompiler.lib
