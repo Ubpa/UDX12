@@ -6,6 +6,25 @@ using namespace Ubpa::UDX12::FG;
 using namespace Ubpa::UDX12;
 using namespace Ubpa;
 
+Executor& Executor::RegisterCopyPassFunc(const UFG::FrameGraph& fg, size_t passNodeIdx) {
+	const auto inputs = fg.GetPassNodes()[passNodeIdx].Inputs();
+	const auto outputs = fg.GetPassNodes()[passNodeIdx].Outputs();
+
+	std::vector<std::pair<size_t, size_t>> pairs;
+	for (size_t i = 0; i < inputs.size(); i++)
+		pairs.emplace_back(inputs[i], outputs[i]);
+
+	passFuncs[passNodeIdx] = [pairs = std::move(pairs)](ID3D12GraphicsCommandList* cmdList, const PassRsrcs& rsrcs) {
+		for (const auto& [in_id, out_id] : pairs) {
+			auto in_rsrc = rsrcs.at(in_id).resource;
+			auto out_rsrc = rsrcs.at(out_id).resource;
+			assert(in_rsrc && out_rsrc);
+			cmdList->CopyResource(out_rsrc, in_rsrc);
+		}
+	};
+	return *this;
+}
+
 void Executor::Execute(
 	ID3D12CommandQueue* cmdQueue,
 	const UFG::Compiler::Result& crst,

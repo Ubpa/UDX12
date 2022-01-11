@@ -118,7 +118,8 @@ namespace Ubpa::UDX12::Util {
 		const std::string& entrypoint,
 		const std::string& target,
         D3DInclude* pInclude,
-        LPCSTR pSourceName = nullptr
+        LPCSTR pSourceName = nullptr,
+        UINT compileFlags = D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION
 	);
 
 	HRESULT __cdecl CreateTexture2DArrayFromMemory(_In_ ID3D12Device* device,

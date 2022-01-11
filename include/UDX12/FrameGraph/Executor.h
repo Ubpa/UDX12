@@ -22,6 +22,8 @@ namespace Ubpa::UDX12::FG {
 			return *this;
 		}
 
+		Executor& RegisterCopyPassFunc(const UFG::FrameGraph& fg, size_t passNodeIdx);
+
 		void NewFrame() {
 			for (auto allocator : used_allocators) {
 				allocator->Reset();

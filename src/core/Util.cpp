@@ -163,13 +163,9 @@ ComPtr<ID3DBlob> Util::CompileShader(
     const std::string& entrypoint,
 	const std::string& target,
 	D3DInclude* pInclude,
-    LPCSTR pSourceName
+    LPCSTR pSourceName,
+    UINT compileFlags
 ) {
-	UINT compileFlags = 0;
-#if defined(DEBUG) || defined(_DEBUG)  
-	compileFlags = D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION;
-#endif
-
 	HRESULT hr = S_OK;
 
 	ComPtr<ID3DBlob> byteCode;

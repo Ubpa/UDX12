@@ -86,6 +86,8 @@ namespace Ubpa::UDX12::FG {
 		// only support CBV, SRV, UAV
 		RsrcMngr& RegisterRsrcTable(const std::vector<std::tuple<size_t, RsrcImplDesc>>& rsrcNodeIndices);
 
+		RsrcMngr& RegisterCopyPassRsrcState(const UFG::FrameGraph& fg, size_t passNodeIdx);
+
 		// you should
 		// 1. use RegisterImportedRsrc or RegisterTemporalRsrc to mark each resource nodes
 		// 2. use RegisterPassRsrcs to mark each resource nodes for every passes

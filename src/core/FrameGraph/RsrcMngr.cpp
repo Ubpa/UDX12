@@ -488,6 +488,19 @@ RsrcMngr& RsrcMngr::RegisterRsrcTable(const std::vector<std::tuple<size_t, RsrcI
 	return *this;
 }
 
+RsrcMngr& RsrcMngr::RegisterCopyPassRsrcState(const UFG::FrameGraph& fg, size_t passNodeIdx) {
+	const auto& passNode = fg.GetPassNodes()[passNodeIdx];
+	assert(passNode.GetType() == UFG::PassNode::Type::Copy && passNode.IsValid());
+
+	for (size_t inputNodeIndex : passNode.Inputs())
+		RegisterPassRsrcState(passNodeIdx, inputNodeIndex, D3D12_RESOURCE_STATE_COPY_SOURCE);
+
+	for (size_t outputNodeIndex : passNode.Outputs())
+		RegisterPassRsrcState(passNodeIdx, outputNodeIndex, D3D12_RESOURCE_STATE_COPY_DEST);
+
+	return *this;
+}
+
 void RsrcMngr::AllocateHandle() {
 	for (const auto& [passNodeIdx, rsrcs] : passNodeIdx2rsrcMap) {
 		for (const auto& [rsrcNodeIdx, state_descs] : rsrcs) {
