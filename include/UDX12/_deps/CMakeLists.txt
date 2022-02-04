@@ -1,5 +1,5 @@
 Ubpa_DownloadZip(
-  https://cdn.jsdelivr.net/gh/Ubpa/UData@master/UDX12/d3dx12/d3dx12_20200602.zip
+  https://udata-1308066321.cos.ap-guangzhou.myqcloud.com/d3dx12_20200602.zip
   d3dx12.zip
   SHA256 8ADAFBA084B8F2FB5272A81E2B8D8248E14FF5B87531616D6FE55DE4A091B327
 )
