@@ -14,23 +14,17 @@ namespace Ubpa::UDX12::FG {
 	public:
 		using PassFunction = unique_function<void(ID3D12GraphicsCommandList*, const PassRsrcs&) const>;
 
-		Executor(ID3D12Device* device, size_t num_threads = std::thread::hardware_concurrency()) :
-			device{ device }, threadpool{ num_threads } {}
+		Executor(ID3D12Device* device, size_t num_threads = std::thread::hardware_concurrency());
 
-		Executor& RegisterPassFunc(size_t passNodeIdx, PassFunction func) {
-			passFuncs[passNodeIdx] = std::move(func);
-			return *this;
-		}
+		Executor& RegisterPassFunc(size_t passNodeIdx, PassFunction func);
+
+		Executor& RegisterCopyPassFunc(size_t passNodeIdx,
+			std::span<const size_t> srcRsrcNodeIndices,
+			std::span<const size_t> dstRsrcNodeIndices);
 
 		Executor& RegisterCopyPassFunc(const UFG::FrameGraph& fg, size_t passNodeIdx);
 
-		void NewFrame() {
-			for (auto allocator : used_allocators) {
-				allocator->Reset();
-				free_allocators.push_back(allocator);
-			}
-			used_allocators.clear();
-		}
+		void NewFrame();
 
 		void Execute(
 			ID3D12CommandQueue* cmdQueue,

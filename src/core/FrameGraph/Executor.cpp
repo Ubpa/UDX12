@@ -6,13 +6,29 @@ using namespace Ubpa::UDX12::FG;
 using namespace Ubpa::UDX12;
 using namespace Ubpa;
 
-Executor& Executor::RegisterCopyPassFunc(const UFG::FrameGraph& fg, size_t passNodeIdx) {
-	const auto inputs = fg.GetPassNodes()[passNodeIdx].Inputs();
-	const auto outputs = fg.GetPassNodes()[passNodeIdx].Outputs();
+Executor::Executor(ID3D12Device* device, size_t num_threads) :
+	device{ device }, threadpool{ num_threads } {}
 
+Executor& Executor::RegisterPassFunc(size_t passNodeIdx, PassFunction func) {
+	passFuncs[passNodeIdx] = std::move(func);
+	return *this;
+}
+
+void Executor::NewFrame() {
+	for (auto allocator : used_allocators) {
+		allocator->Reset();
+		free_allocators.push_back(allocator);
+	}
+	used_allocators.clear();
+}
+
+Executor& Executor::RegisterCopyPassFunc(size_t passNodeIdx,
+	std::span<const size_t> srcRsrcNodeIndices,
+	std::span<const size_t> dstRsrcNodeIndices) {
+	
 	std::vector<std::pair<size_t, size_t>> pairs;
-	for (size_t i = 0; i < inputs.size(); i++)
-		pairs.emplace_back(inputs[i], outputs[i]);
+	for (size_t i = 0; i < srcRsrcNodeIndices.size(); i++)
+		pairs.emplace_back(srcRsrcNodeIndices[i], dstRsrcNodeIndices[i]);
 
 	passFuncs[passNodeIdx] = [pairs = std::move(pairs)](ID3D12GraphicsCommandList* cmdList, const PassRsrcs& rsrcs) {
 		for (const auto& [in_id, out_id] : pairs) {
@@ -23,6 +39,13 @@ Executor& Executor::RegisterCopyPassFunc(const UFG::FrameGraph& fg, size_t passN
 		}
 	};
 	return *this;
+}
+
+Executor& Executor::RegisterCopyPassFunc(const UFG::FrameGraph& fg, size_t passNodeIdx) {
+	const auto inputs = fg.GetPassNodes()[passNodeIdx].Inputs();
+	const auto outputs = fg.GetPassNodes()[passNodeIdx].Outputs();
+
+	return RegisterCopyPassFunc(passNodeIdx, inputs, outputs);
 }
 
 void Executor::Execute(

@@ -488,17 +488,28 @@ RsrcMngr& RsrcMngr::RegisterRsrcTable(const std::vector<std::tuple<size_t, RsrcI
 	return *this;
 }
 
+RsrcMngr& RsrcMngr::RegisterCopyPassRsrcState(size_t passRsrcNodeIdx, size_t srcRsrcNodeIdx, size_t dstRsrcNodeIdx) {
+	RegisterPassRsrcState(passRsrcNodeIdx, srcRsrcNodeIdx, D3D12_RESOURCE_STATE_COPY_SOURCE);
+	RegisterPassRsrcState(passRsrcNodeIdx, dstRsrcNodeIdx, D3D12_RESOURCE_STATE_COPY_DEST);
+
+	return *this;
+}
+
+RsrcMngr& RsrcMngr::RegisterCopyPassRsrcState(size_t passNodeIdx,
+	std::span<const size_t> srcRsrcNodeIndices,
+	std::span<const size_t> dstRsrcNodeIndices) {
+	assert(srcRsrcNodeIndices.size() == dstRsrcNodeIndices.size());
+	for (size_t i = 0; i < srcRsrcNodeIndices.size(); i++)
+		RegisterCopyPassRsrcState(passNodeIdx, srcRsrcNodeIndices[i], dstRsrcNodeIndices[i]);
+
+	return *this;
+}
+
 RsrcMngr& RsrcMngr::RegisterCopyPassRsrcState(const UFG::FrameGraph& fg, size_t passNodeIdx) {
 	const auto& passNode = fg.GetPassNodes()[passNodeIdx];
 	assert(passNode.GetType() == UFG::PassNode::Type::Copy && passNode.IsValid());
 
-	for (size_t inputNodeIndex : passNode.Inputs())
-		RegisterPassRsrcState(passNodeIdx, inputNodeIndex, D3D12_RESOURCE_STATE_COPY_SOURCE);
-
-	for (size_t outputNodeIndex : passNode.Outputs())
-		RegisterPassRsrcState(passNodeIdx, outputNodeIndex, D3D12_RESOURCE_STATE_COPY_DEST);
-
-	return *this;
+	return RegisterCopyPassRsrcState(passNodeIdx, passNode.Inputs(), passNode.Outputs());
 }
 
 void RsrcMngr::AllocateHandle() {
