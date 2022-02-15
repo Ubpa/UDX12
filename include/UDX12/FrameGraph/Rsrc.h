@@ -4,6 +4,7 @@
 
 #include <variant>
 #include <unordered_map>
+#include <map>
 #include <functional>
 #include <UTemplate/Type.hpp>
 
@@ -521,6 +522,8 @@ namespace std {
 namespace Ubpa::UDX12::FG {
 	struct RsrcDescInfo {
 		struct CpuGpuInfo {
+			static constexpr const char DefaultID[] = "CpuGpuInfo::DefaultID";
+
 			D3D12_CPU_DESCRIPTOR_HANDLE cpuHandle{ 0 };
 			D3D12_GPU_DESCRIPTOR_HANDLE gpuHandle{ 0 };
 			bool init{ false };
@@ -531,21 +534,23 @@ namespace Ubpa::UDX12::FG {
 			bool init{ false };
 		};
 
-		std::unordered_map<D3D12_CONSTANT_BUFFER_VIEW_DESC, CpuGpuInfo>  desc2info_cbv;
-		std::unordered_map<D3D12_SHADER_RESOURCE_VIEW_DESC, CpuGpuInfo>  desc2info_srv;
-		std::unordered_map<D3D12_UNORDERED_ACCESS_VIEW_DESC, CpuGpuInfo> desc2info_uav;
+		std::unordered_map<D3D12_CONSTANT_BUFFER_VIEW_DESC, std::map<std::string, CpuGpuInfo, std::less<>>>  desc2info_cbv;
+		std::unordered_map<D3D12_SHADER_RESOURCE_VIEW_DESC, std::map<std::string, CpuGpuInfo, std::less<>>>  desc2info_srv;
+		std::unordered_map<D3D12_UNORDERED_ACCESS_VIEW_DESC, std::map<std::string, CpuGpuInfo, std::less<>>> desc2info_uav;
 
-		std::unordered_map<D3D12_RENDER_TARGET_VIEW_DESC, CpuInfo>       desc2info_rtv;
-		std::unordered_map<D3D12_DEPTH_STENCIL_VIEW_DESC, CpuInfo>       desc2info_dsv;
+		std::unordered_map<D3D12_RENDER_TARGET_VIEW_DESC, CpuInfo> desc2info_rtv;
+		std::unordered_map<D3D12_DEPTH_STENCIL_VIEW_DESC, CpuInfo> desc2info_dsv;
 
-		CpuGpuInfo null_info_srv;
-		CpuGpuInfo null_info_uav;
+		std::map<std::string, CpuGpuInfo, std::less<>> null_info_srv;
+		std::map<std::string, CpuGpuInfo, std::less<>> null_info_uav;
 
-		CpuInfo    null_info_dsv;
-		CpuInfo    null_info_rtv;
+		CpuInfo null_info_dsv;
+		CpuInfo null_info_rtv;
 
-		bool HaveNullSrv() const { return null_info_srv.cpuHandle.ptr != 0; }
-		bool HaveNullUav() const { return null_info_uav.cpuHandle.ptr != 0; }
+		const CpuGpuInfo& GetAnyCBV(const D3D12_CONSTANT_BUFFER_VIEW_DESC& desc) const { return desc2info_cbv.at(desc).begin()->second; }
+		const CpuGpuInfo& GetAnySRV(const D3D12_SHADER_RESOURCE_VIEW_DESC& desc) const { return desc2info_srv.at(desc).begin()->second; }
+		const CpuGpuInfo& GetAnyUAV(const D3D12_UNORDERED_ACCESS_VIEW_DESC& desc) const { return desc2info_uav.at(desc).begin()->second; }
+
 		bool HaveNullDsv() const { return null_info_dsv.cpuHandle.ptr != 0; }
 		bool HaveNullRtv() const { return null_info_rtv.cpuHandle.ptr != 0; }
 	};

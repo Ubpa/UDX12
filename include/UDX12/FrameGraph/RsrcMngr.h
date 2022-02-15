@@ -84,7 +84,7 @@ namespace Ubpa::UDX12::FG {
 		);
 
 		// only support CBV, SRV, UAV
-		RsrcMngr& RegisterRsrcTable(const std::vector<std::tuple<size_t, RsrcImplDesc>>& rsrcNodeIndices);
+		RsrcMngr& RegisterRsrcTable(const std::string& ID, const std::vector<std::tuple<size_t, RsrcImplDesc>>& rsrcNodeIndices);
 
 		RsrcMngr& RegisterCopyPassRsrcState(size_t passNodeIdx, size_t srcRsrcNodeIdx, size_t dstRsrcNodeIdx);
 
