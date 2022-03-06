@@ -30,6 +30,9 @@ RsrcMngr::~RsrcMngr() {
 }
 
 void RsrcMngr::NewFrame() {
+	for (const auto& [type, rsrc] : unreusableRsrcs)
+		pool[type].push_back(rsrc);
+
 	for (auto& [type, rsrcs] : pool) {
 		rsrcs.erase(std::remove_if(rsrcs.begin(), rsrcs.end(), [&](const auto& rsrc) {
 			if (!usedRsrcs.contains(rsrc.pRsrc)) {
@@ -55,6 +58,7 @@ void RsrcMngr::NewFrame() {
 	passNodeIdx2rsrcMap.clear();
 	actives.clear();
 	usedRsrcs.clear();
+	unreusableRsrcs.clear();
 
 	for (const auto& idx : csuDHused)
 		csuDHfree.push_back(idx);
@@ -76,6 +80,7 @@ void RsrcMngr::Clear() {
 	NewFrame();
 	rsrcKeeper.clear();
 	pool.clear();
+	unreusableRsrcs.clear();
 }
 
 void RsrcMngr::CSUDHReserve(UINT num) {
@@ -241,7 +246,7 @@ void RsrcMngr::Construct(size_t rsrcNodeIdx) {
 				D3D12_HEAP_FLAG_NONE,
 				&type.desc,
 				view.state,
-				type.contain_claervalue ? &type.clearvalue : nullptr,
+				type.containClearvalue ? &type.clearvalue : nullptr,
 				IID_PPV_ARGS(ptr.GetAddressOf())));
 			rsrcKeeper.emplace(ptr.Get(), ptr);
 			view.pRsrc = ptr.Get();
@@ -257,8 +262,13 @@ void RsrcMngr::Construct(size_t rsrcNodeIdx) {
 
 void RsrcMngr::DestructCPU(size_t rsrcNodeIdx) {
 	auto view = actives.at(rsrcNodeIdx);
-	if (!IsImported(rsrcNodeIdx))
-		pool[temporals.at(rsrcNodeIdx)].push_back(view);
+	if (!IsImported(rsrcNodeIdx)) {
+		const auto& rsrcType = temporals.at(rsrcNodeIdx);
+		if (rsrcType.reusable)
+			pool[temporals.at(rsrcNodeIdx)].push_back(view);
+		else
+			unreusableRsrcs.emplace_back(rsrcType, view);
+	}
 	/* // run in GPU timeline
 	else {
 		auto orig_state = importeds.at(rsrcNodeIdx).state;
@@ -299,14 +309,14 @@ void RsrcMngr::Move(size_t dstRsrcNodeIdx, size_t srcRsrcNodeIdx) {
 	}
 }
 
-RsrcMngr& RsrcMngr::RegisterTemporalRsrc(size_t rsrcNodeIdx, D3D12_RESOURCE_DESC desc) {
-	auto [iter, success] = temporals.emplace(rsrcNodeIdx, RsrcType{ desc, false });
+RsrcMngr& RsrcMngr::RegisterTemporalRsrc(size_t rsrcNodeIdx, D3D12_RESOURCE_DESC desc, bool reusable) {
+	auto [iter, success] = temporals.emplace(rsrcNodeIdx, RsrcType{ .desc = desc, .containClearvalue = false,.reusable = reusable });
 	assert(success);
 	return *this;
 }
 
-RsrcMngr& RsrcMngr::RegisterTemporalRsrcAutoClear(size_t rsrcNodeIdx, D3D12_RESOURCE_DESC desc) {
-	bool contain_clearvalue;
+RsrcMngr& RsrcMngr::RegisterTemporalRsrcAutoClear(size_t rsrcNodeIdx, D3D12_RESOURCE_DESC desc, bool reusable) {
+	bool containClearvalue;
 	D3D12_CLEAR_VALUE clearvalue;
 	const float black[4] = { 0,0,0,1 };
 	if (desc.Dimension != D3D12_RESOURCE_DIMENSION_BUFFER
@@ -340,10 +350,10 @@ RsrcMngr& RsrcMngr::RegisterTemporalRsrcAutoClear(size_t rsrcNodeIdx, D3D12_RESO
 		case DXGI_FORMAT_B8G8R8X8_TYPELESS:
 		case DXGI_FORMAT_BC6H_TYPELESS:
 		case DXGI_FORMAT_BC7_TYPELESS:
-			contain_clearvalue = false;
+			containClearvalue = false;
 			break;
 		default:
-			contain_clearvalue = true;
+			containClearvalue = true;
 			if(desc.Flags == D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL)
 				clearvalue = CD3DX12_CLEAR_VALUE(desc.Format, 1.f, 0);
 			else
@@ -352,22 +362,25 @@ RsrcMngr& RsrcMngr::RegisterTemporalRsrcAutoClear(size_t rsrcNodeIdx, D3D12_RESO
 		}
 	}
 	else
-		contain_clearvalue = false;
+		containClearvalue = false;
 
-	if (contain_clearvalue) {
-		auto [iter, success] = temporals.emplace(rsrcNodeIdx, RsrcType{ desc, true, clearvalue });
+	if (containClearvalue) {
+		auto [iter, success] = temporals.emplace(rsrcNodeIdx,
+			RsrcType{ .desc = desc, .containClearvalue = true, .clearvalue = clearvalue, .reusable = reusable });
 		assert(success);
 	}
 	else {
-		auto [iter, success] = temporals.emplace(rsrcNodeIdx, RsrcType{ desc, false });
+		auto [iter, success] = temporals.emplace(rsrcNodeIdx,
+			RsrcType{ .desc = desc, .containClearvalue = false, .reusable = reusable });
 		assert(success);
 	}
 
 	return *this;
 }
 
-RsrcMngr& RsrcMngr::RegisterTemporalRsrc(size_t rsrcNodeIdx, D3D12_RESOURCE_DESC desc, D3D12_CLEAR_VALUE clearvalue) {
-	auto [iter, success] = temporals.emplace(rsrcNodeIdx, RsrcType{ desc, true, clearvalue });
+RsrcMngr& RsrcMngr::RegisterTemporalRsrc(size_t rsrcNodeIdx, D3D12_RESOURCE_DESC desc, D3D12_CLEAR_VALUE clearvalue, bool reusable) {
+	auto [iter, success] = temporals.emplace(rsrcNodeIdx,
+		RsrcType{ .desc = desc, .containClearvalue = true, .clearvalue = clearvalue, .reusable = reusable });
 	assert(success);
 	return *this;
 }
@@ -512,6 +525,15 @@ RsrcMngr& RsrcMngr::RegisterCopyPassRsrcState(const UFG::FrameGraph& fg, size_t 
 	return RegisterCopyPassRsrcState(passNodeIdx, passNode.Inputs(), passNode.Outputs());
 }
 
+DXGI_FORMAT RsrcMngr::GetResourceFormat(size_t rsrcNodeIdx) const {
+	if (auto target = temporals.find(rsrcNodeIdx); target != temporals.end())
+		return target->second.desc.Format;
+	else if (auto target = importeds.find(rsrcNodeIdx); target != importeds.end() && target->second.pRsrc)
+		return target->second.pRsrc->GetDesc().Format;
+	else
+		return DXGI_FORMAT_UNKNOWN;
+}
+
 void RsrcMngr::AllocateHandle() {
 	for (const auto& [passNodeIdx, rsrcs] : passNodeIdx2rsrcMap) {
 		for (const auto& [rsrcNodeIdx, state_descs] : rsrcs) {
@@ -628,7 +650,7 @@ void RsrcMngr::AllocateHandle() {
 
 PassRsrcs RsrcMngr::RequestPassRsrcs(ID3D12GraphicsCommandList* cmdList, size_t passNodeIdx) {
 	PassRsrcs passRsrc;
-	const auto& rsrcMap = passNodeIdx2rsrcMap.at(passNodeIdx);
+	const auto& rsrcMap = passNodeIdx2rsrcMap[passNodeIdx];
 	for (const auto& [rsrcNodeIdx, state_descs] : rsrcMap) {
 		const auto& [state, descs] = state_descs;
 		auto& view = actives.at(rsrcNodeIdx);

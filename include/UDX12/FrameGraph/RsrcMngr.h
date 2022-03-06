@@ -63,9 +63,9 @@ namespace Ubpa::UDX12::FG {
 		}
 
 		// mark the resource node as temporal
-		RsrcMngr& RegisterTemporalRsrc(size_t rsrcNodeIdx, D3D12_RESOURCE_DESC type);
-		RsrcMngr& RegisterTemporalRsrcAutoClear(size_t rsrcNodeIdx, D3D12_RESOURCE_DESC type);
-		RsrcMngr& RegisterTemporalRsrc(size_t rsrcNodeIdx, D3D12_RESOURCE_DESC type, D3D12_CLEAR_VALUE clearvalue);
+		RsrcMngr& RegisterTemporalRsrc(size_t rsrcNodeIdx, D3D12_RESOURCE_DESC type, bool reusable = true);
+		RsrcMngr& RegisterTemporalRsrcAutoClear(size_t rsrcNodeIdx, D3D12_RESOURCE_DESC type, bool reusable = true);
+		RsrcMngr& RegisterTemporalRsrc(size_t rsrcNodeIdx, D3D12_RESOURCE_DESC type, D3D12_CLEAR_VALUE clearvalue, bool reusable = true);
 
 		// provide details for the resource node of the pass node
 		RsrcMngr& RegisterPassRsrcState(size_t passNodeIdx, size_t rsrcNodeIdx, RsrcState state);
@@ -94,6 +94,8 @@ namespace Ubpa::UDX12::FG {
 
 		RsrcMngr& RegisterCopyPassRsrcState(const UFG::FrameGraph& fg, size_t passNodeIdx);
 
+		DXGI_FORMAT GetResourceFormat(size_t rsrcNodeIdx) const;
+
 		// you should
 		// 1. use RegisterImportedRsrc or RegisterTemporalRsrc to mark each resource nodes
 		// 2. use RegisterPassRsrcs to mark each resource nodes for every passes
@@ -114,11 +116,12 @@ namespace Ubpa::UDX12::FG {
 
 		struct RsrcType {
 			D3D12_RESOURCE_DESC desc;
-			bool contain_claervalue;
+			bool containClearvalue;
 			D3D12_CLEAR_VALUE clearvalue;
+			bool reusable{ true };
 			bool operator==(const RsrcType& rhs) const noexcept {
-				return desc == rhs.desc && contain_claervalue == rhs.contain_claervalue
-					&& (contain_claervalue?clearvalue == rhs.clearvalue:true);
+				return desc == rhs.desc && containClearvalue == rhs.containClearvalue
+					&& (containClearvalue?clearvalue == rhs.clearvalue:true);
 			}
 		};
 		struct RsrcTypeHasher {
@@ -132,6 +135,7 @@ namespace Ubpa::UDX12::FG {
 		// type -> vector<view>
 		std::unordered_map<Rsrc*, RsrcPtr> rsrcKeeper;
 		std::unordered_map<RsrcType, std::vector<SRsrcView>, RsrcTypeHasher> pool;
+		std::vector<std::pair<RsrcType, SRsrcView>> unreusableRsrcs;
 		std::unordered_set<Rsrc*> usedRsrcs;
 
 		// rsrcNodeIdx -> view
