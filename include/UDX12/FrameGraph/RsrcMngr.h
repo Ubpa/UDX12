@@ -63,9 +63,11 @@ namespace Ubpa::UDX12::FG {
 		}
 
 		// mark the resource node as temporal
-		RsrcMngr& RegisterTemporalRsrc(size_t rsrcNodeIdx, D3D12_RESOURCE_DESC type, bool reusable = true);
-		RsrcMngr& RegisterTemporalRsrcAutoClear(size_t rsrcNodeIdx, D3D12_RESOURCE_DESC type, bool reusable = true);
-		RsrcMngr& RegisterTemporalRsrc(size_t rsrcNodeIdx, D3D12_RESOURCE_DESC type, D3D12_CLEAR_VALUE clearvalue, bool reusable = true);
+		RsrcMngr& RegisterTemporalRsrc(size_t rsrcNodeIdx, D3D12_RESOURCE_DESC type);
+		RsrcMngr& RegisterTemporalRsrcAutoClear(size_t rsrcNodeIdx, D3D12_RESOURCE_DESC type);
+		RsrcMngr& RegisterTemporalRsrc(size_t rsrcNodeIdx, D3D12_RESOURCE_DESC type, D3D12_CLEAR_VALUE clearvalue);
+		RsrcMngr& RegisterTemporalRsrcReusable(size_t rsrcNodeIdx, bool reusable);
+		RsrcMngr& RegisterTemporalRsrcConstructState(size_t rsrcNodeIdx, D3D12_RESOURCE_STATES state);
 
 		// provide details for the resource node of the pass node
 		RsrcMngr& RegisterPassRsrcState(size_t passNodeIdx, size_t rsrcNodeIdx, RsrcState state);
@@ -118,7 +120,6 @@ namespace Ubpa::UDX12::FG {
 			D3D12_RESOURCE_DESC desc;
 			bool containClearvalue;
 			D3D12_CLEAR_VALUE clearvalue;
-			bool reusable{ true };
 			bool operator==(const RsrcType& rhs) const noexcept {
 				return desc == rhs.desc && containClearvalue == rhs.containClearvalue
 					&& (containClearvalue?clearvalue == rhs.clearvalue:true);
@@ -143,6 +144,8 @@ namespace Ubpa::UDX12::FG {
 
 		// rsrcNodeIdx -> type
 		std::unordered_map<size_t, RsrcType> temporals;
+		std::unordered_map<size_t, bool> temporalReusable;
+		std::unordered_map<size_t, D3D12_RESOURCE_STATES> temporalConstructStates;
 
 		// passNodeIdx -> resource (state + descs) map
 		std::unordered_map<size_t, std::unordered_map<size_t, std::tuple<RsrcState, std::vector<RsrcImplDesc>>>> passNodeIdx2rsrcMap;
